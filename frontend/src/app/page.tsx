@@ -205,6 +205,7 @@ export default function Dashboard() {
                 e.stopPropagation();
                 console.log("Omesham: Forced Switch to", tab.label);
                 setActiveTab(tab.label);
+                window.location.hash = tab.id || 'rig';
               }}
               style={{ 
                 cursor: 'pointer', 
