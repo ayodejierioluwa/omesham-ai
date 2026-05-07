@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from drilling_ml import DrillingML
 from datetime import datetime, timedelta
+import asyncio
+import json
 
 app = FastAPI(title="Omesham AI API")
 
@@ -53,3 +56,25 @@ def get_drilling_telemetry(offset: int = 0, limit: int = 30):
         "total_records": total_records,
         "data": data
     }
+
+@app.get("/api/drilling/telemetry_stream")
+async def telemetry_stream():
+    """Establish a real-time, low-latency Server-Sent Events (SSE) stream."""
+    async def event_generator():
+        df = drilling_engine.get_processed_data()
+        total_records = len(df)
+        offset = 0
+        
+        while True:
+            row = df.iloc[offset].to_dict()
+            # Inject live, high-resolution timestamp
+            row["timestamp"] = datetime.now().isoformat()
+            
+            # Format and send SSE payload
+            yield f"data: {json.dumps(row)}\n\n"
+            
+            # Progress loop to stream continuous realtime frames
+            offset = (offset + 1) % total_records
+            await asyncio.sleep(0.2) # High-frequency 5Hz streams (every 200ms)
+            
+    return StreamingResponse(event_generator(), media_type="text/event-stream")

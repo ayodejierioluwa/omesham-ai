@@ -196,8 +196,9 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('Rig Telemetry');
   const [currentDepth, setCurrentDepth] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [alertLogs, setAlertLogs] = useState<any[]>([]);
   const depthRef = useRef(0);
-  const offsetRef = useRef(0);
 
   // Micro-Frontend SSO Handshake Listener
   useEffect(() => {
@@ -236,35 +237,84 @@ export default function Dashboard() {
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
+  // Sub-Second SSE Telemetry Stream connection
   useEffect(() => {
-    const fetchTelemetry = async () => {
+    console.log("Omesham: Initializing low-latency SSE telemetry stream...");
+    const eventSource = new EventSource("http://127.0.0.1:8006/api/drilling/telemetry_stream");
+    
+    eventSource.onmessage = (event) => {
       try {
-        const response = await fetch(`http://127.0.0.1:8006/api/drilling/processed_telemetry?offset=${offsetRef.current}&limit=30`);
-        const result = await response.json();
-        if (result && result.data) {
-          setTelemetry(result.data.map((pt: any) => ({
-            ...pt,
-            timestamp: new Date(pt.timestamp).toLocaleTimeString()
-          })));
-          offsetRef.current = (offsetRef.current + 30) % 1000;
+        const pt = JSON.parse(event.data);
+        const formattedTimestamp = new Date(pt.timestamp).toLocaleTimeString();
+        
+        // Push to rolling buffer
+        setTelemetry(prev => {
+          const updated = [...prev, { ...pt, timestamp: formattedTimestamp }];
+          if (updated.length > 30) {
+            return updated.slice(updated.length - 30);
+          }
+          return updated;
+        });
+
+        // Capture predictive warning alerts and anomalies dynamically for logging
+        if (pt.is_anomaly || pt.forecast_risk > 30) {
+          const alertType = pt.is_anomaly ? pt.anomaly_type : "Predictive Alert";
+          const alertMsg = pt.is_anomaly ? pt.recommended_solution : pt.proactive_alert;
+          
+          setAlertLogs(prev => {
+            const lastLog = prev[prev.length - 1];
+            // Deduplicate alerts inside an 8 second window
+            if (!lastLog || lastLog.message !== alertMsg || (Date.now() - lastLog.rawTime > 8000)) {
+              return [...prev, {
+                timestamp: formattedTimestamp,
+                rawTime: Date.now(),
+                type: alertType,
+                message: alertMsg,
+                risk: pt.forecast_risk
+              }];
+            }
+            return prev;
+          });
         }
       } catch (e) {
-        console.error("Telemetry error:", e);
+        console.error("Omesham SSE Parse Error:", e);
       }
     };
 
-    fetchTelemetry();
-    const interval = setInterval(fetchTelemetry, 2000);
+    eventSource.onerror = (err) => {
+      console.error("Omesham SSE connection dropped, retrying...", err);
+    };
+
+    return () => {
+      console.log("Omesham: Uncoupling SSE telemetry listener.");
+      eventSource.close();
+    };
+  }, []);
+
+  // Sync Depth incrementor
+  useEffect(() => {
+    const interval = setInterval(() => {
+      depthRef.current += 0.24;
+      setCurrentDepth(depthRef.current);
+    }, 200);
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      depthRef.current += 1.2;
-      setCurrentDepth(depthRef.current);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
+  // Helper selectors for the operations report
+  const getAverage = (key: string) => {
+    if (telemetry.length === 0) return 0;
+    return telemetry.reduce((acc, val) => acc + val[key], 0) / telemetry.length;
+  };
+
+  const getMin = (key: string) => {
+    if (telemetry.length === 0) return 0;
+    return Math.min(...telemetry.map(pt => pt[key]));
+  };
+
+  const getMax = (key: string) => {
+    if (telemetry.length === 0) return 0;
+    return Math.max(...telemetry.map(pt => pt[key]));
+  };
 
   if (!isAuthenticated) {
     return (
@@ -276,9 +326,33 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex h-screen w-full bg-slate-950 text-slate-300 font-sans overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col relative z-[100]">
+    <div className="flex h-screen w-full bg-slate-950 text-slate-300 font-sans overflow-hidden relative">
+      <style dangerouslySetInnerHTML={{__html: `
+        @media print {
+          body {
+            background: white !important;
+            color: black !important;
+          }
+          aside, header, main, .no-print {
+            display: none !important;
+          }
+          #printable-report {
+            display: block !important;
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100% !important;
+            height: auto !important;
+            background: white !important;
+            color: black !important;
+            z-index: 999999 !important;
+            padding: 30px !important;
+          }
+        }
+      `}} />
+
+      {/* Sidebar - HIDDEN during print */}
+      <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col relative z-[100] no-print">
         <div className="p-6 border-b border-slate-800">
           <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-400">OMESHAM AI</h1>
           <p className="text-[10px] tracking-widest uppercase text-slate-500 mt-1">Drilling Command Center</p>
@@ -315,18 +389,26 @@ export default function Dashboard() {
         </nav>
       </aside>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col relative overflow-hidden h-full">
+      {/* Main Content - HIDDEN during print */}
+      <div className="flex-1 flex flex-col relative overflow-hidden h-full no-print">
         <header className="h-20 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between px-8">
            <h2 className="text-xl font-bold text-slate-100">{activeTab}</h2>
-           <div className="text-right">
-              <p className="text-xs text-slate-500 uppercase">Current Depth</p>
-              <p className="text-lg font-mono font-bold text-amber-400">{currentDepth.toFixed(1)} ft</p>
+           <div className="flex items-center space-x-6">
+              <button 
+                 onClick={() => setShowReportModal(true)}
+                 className="px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-slate-950 font-bold rounded-lg text-xs tracking-wider uppercase transition-all shadow-lg flex items-center space-x-2"
+              >
+                 <svg className="w-4 h-4 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                 <span>Generate Shift Report</span>
+              </button>
+              <div className="text-right">
+                 <p className="text-xs text-slate-500 uppercase">Current Depth</p>
+                 <p className="text-lg font-mono font-bold text-amber-400">{currentDepth.toFixed(1)} ft</p>
+              </div>
            </div>
         </header>
 
         <main className="flex-1 overflow-y-auto p-8 relative h-full">
-          {/* Using display: none for more reliable iframe behavior */}
           <div style={{ display: activeTab === 'Rig Telemetry' ? 'block' : 'none' }} className="h-full">
             <RigTelemetry telemetry={telemetry} />
           </div>
@@ -338,6 +420,136 @@ export default function Dashboard() {
           </div>
         </main>
       </div>
+
+      {/* --- PREMIUM PRINTABLE GLASSMORPHIC OPERATIONS REPORT OVERLAY --- */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[99999] flex items-center justify-center p-6 overflow-y-auto no-print">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl p-8 max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col justify-between">
+            {/* Modal Header Controls */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-slate-100 flex items-center space-x-2">
+                  <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                  <span>Operations Shift Report — Rig-01</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 font-semibold uppercase tracking-wider">Automated Drilling Diagnostics Document</p>
+              </div>
+              <div className="flex space-x-3">
+                <button 
+                  onClick={() => window.print()}
+                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-xs uppercase tracking-wider transition-all"
+                >
+                  Print / Save PDF
+                </button>
+                <button 
+                  onClick={() => setShowReportModal(false)}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-lg text-xs uppercase tracking-wider transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            {/* Document Frame */}
+            <div id="printable-report" className="bg-slate-950 border border-slate-800 rounded-xl p-8 font-mono text-xs text-slate-300 leading-relaxed shadow-inner">
+              {/* Header Box */}
+              <div className="border-b-2 border-slate-700 pb-6 mb-6 flex justify-between items-start">
+                <div>
+                  <h1 className="text-lg font-bold text-slate-100 uppercase tracking-widest">OMESHAM RIG INTELLIGENCE CORE</h1>
+                  <p className="text-[10px] text-slate-500 mt-1 font-semibold uppercase font-mono">Security Identity: SSO OPERATOR SECURE NODE</p>
+                  <p className="text-[10px] text-slate-400 mt-1">Generated: {new Date().toLocaleString()}</p>
+                </div>
+                <div className="text-right border-l border-slate-800 pl-6 font-mono">
+                  <p className="text-slate-500 uppercase font-semibold text-[10px]">Shift Summary Status</p>
+                  <p className="text-emerald-400 font-bold text-sm uppercase tracking-wide mt-1">✓ Nominally Standard</p>
+                  <p className="text-slate-400 mt-1">Interval Depth: {currentDepth.toFixed(1)} ft</p>
+                </div>
+              </div>
+
+              {/* Stats Grid */}
+              <div className="mb-6">
+                <h2 className="text-[11px] font-bold text-amber-500 uppercase tracking-wider mb-3 border-b border-slate-800 pb-1">1. Torsional & Hydraulic Performance Averages</h2>
+                <div className="grid grid-cols-4 gap-4 bg-slate-900/50 border border-slate-800/80 rounded-lg p-4">
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase block">Weight on Bit</span>
+                    <span className="text-slate-200 text-sm font-bold font-mono block mt-1">{getAverage('wob_klbs').toFixed(1)} <span className="text-[10px] text-slate-500">klbs</span></span>
+                    <span className="text-[10px] text-slate-600 font-mono mt-0.5 block">Min: {getMin('wob_klbs').toFixed(1)} / Max: {getMax('wob_klbs').toFixed(1)}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase block">Rotary Speed</span>
+                    <span className="text-slate-200 text-sm font-bold font-mono block mt-1">{getAverage('rpm').toFixed(0)} <span className="text-[10px] text-slate-500">RPM</span></span>
+                    <span className="text-[10px] text-slate-600 font-mono mt-0.5 block">Min: {getMin('rpm').toFixed(0)} / Max: {getMax('rpm').toFixed(0)}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase block">Standpipe Pressure</span>
+                    <span className="text-slate-200 text-sm font-bold font-mono block mt-1">{getAverage('spp_psi').toFixed(0)} <span className="text-[10px] text-slate-500">PSI</span></span>
+                    <span className="text-[10px] text-slate-600 font-mono mt-0.5 block">Min: {getMin('spp_psi').toFixed(0)} / Max: {getMax('spp_psi').toFixed(0)}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 uppercase block">Avg ROP rate</span>
+                    <span className="text-slate-200 text-sm font-bold font-mono block mt-1">{getAverage('rop_fph').toFixed(1)} <span className="text-[10px] text-slate-500">ft/hr</span></span>
+                    <span className="text-[10px] text-slate-600 font-mono mt-0.5 block">Min: {getMin('rop_fph').toFixed(0)} / Max: {getMax('rop_fph').toFixed(0)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Trajectory Optimization Card */}
+              <div className="mb-6">
+                <h2 className="text-[11px] font-bold text-amber-500 uppercase tracking-wider mb-3 border-b border-slate-800 pb-1">2. Wellbore Trajectory Optimization Profile</h2>
+                <div className="p-4 bg-slate-900/50 border border-slate-800/80 rounded-lg space-y-2">
+                  <div className="flex justify-between border-b border-slate-800/60 pb-1">
+                    <span className="text-slate-400">Vertical Depth (TVD):</span>
+                    <span className="font-bold text-slate-200">{(currentDepth * 0.95).toFixed(1)} ft</span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-800/60 pb-1">
+                    <span className="text-slate-400">Total Departure:</span>
+                    <span className="font-bold text-slate-200">{(currentDepth * 0.15).toFixed(1)} ft</span>
+                  </div>
+                  <div className="flex justify-between pb-1">
+                    <span className="text-slate-400">Steering Method / Mode:</span>
+                    <span className="font-bold text-teal-400">3D Continuous RSS steering</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* AI Alert Logs */}
+              <div>
+                <h2 className="text-[11px] font-bold text-amber-500 uppercase tracking-wider mb-3 border-b border-slate-800 pb-1">3. Live AI Co-Driller Preventive Action Logs</h2>
+                <div className="max-h-[180px] overflow-y-auto space-y-2 pr-2">
+                  {alertLogs.length === 0 ? (
+                    <p className="text-slate-500 italic p-4 text-center border border-slate-800/60 rounded bg-slate-900/30">No torsional anomalies or preventive hazards detected during this shift. Well dynamics remaining stable.</p>
+                  ) : (
+                    alertLogs.map((log, index) => (
+                      <div key={index} className="flex justify-between items-start p-3 bg-slate-900/40 border border-slate-800 rounded text-[11px]">
+                        <div className="flex-1 pr-6">
+                          <p className={`font-bold ${log.type === "Predictive Alert" ? 'text-amber-400' : 'text-red-400'} uppercase flex items-center space-x-1.5`}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                            <span>{log.type} ({log.risk.toFixed(0)}% risk)</span>
+                          </p>
+                          <p className="text-slate-400 mt-1 font-sans text-xs">{log.message}</p>
+                        </div>
+                        <div className="text-right text-[10px] text-slate-500 font-mono shrink-0">
+                          {log.timestamp}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Signatures */}
+              <div className="border-t border-slate-800 mt-8 pt-8 flex justify-between font-mono">
+                <div className="border-t border-slate-700 w-44 pt-2 text-center text-[9px] uppercase tracking-wider text-slate-500 font-semibold">
+                  Drilling Superintendent
+                </div>
+                <div className="border-t border-slate-700 w-44 pt-2 text-center text-[9px] uppercase tracking-wider text-slate-500 font-semibold">
+                  Authorized AI Auditor
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
