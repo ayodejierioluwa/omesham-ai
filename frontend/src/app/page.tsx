@@ -5,6 +5,8 @@ import React, { useState, useEffect, useRef } from 'react';
 // Components defined outside to ensure stable rendering
 const RigTelemetry = ({ telemetry }: { telemetry: any[] }) => {
   const currentPt = telemetry.length > 0 ? telemetry[telemetry.length - 1] : null;
+  const risk = currentPt?.forecast_risk || 12;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full pb-8">
       {/* Physics Gauges */}
@@ -15,7 +17,7 @@ const RigTelemetry = ({ telemetry }: { telemetry: any[] }) => {
             <p className="text-2xl font-mono font-bold text-slate-100">{currentPt?.wob_klbs.toFixed(1)} <span className="text-sm text-slate-500">klbs</span></p>
           </div>
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg flex flex-col justify-center relative overflow-hidden">
-            <div className={`absolute bottom-0 left-0 w-full h-1 ${currentPt?.rpm && currentPt.rpm < 80 ? 'bg-red-500' : 'bg-emerald-500'}`}></div>
+            <div className={`absolute bottom-0 left-0 w-full h-1 ${currentPt?.rpm && currentPt.rpm < 80 ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`}></div>
             <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider font-semibold">Rotary Speed</p>
             <p className={`text-2xl font-mono font-bold ${currentPt?.rpm && currentPt.rpm < 80 ? 'text-red-400' : 'text-slate-100'}`}>{currentPt?.rpm.toFixed(0)} <span className="text-sm text-slate-500">RPM</span></p>
           </div>
@@ -34,7 +36,9 @@ const RigTelemetry = ({ telemetry }: { telemetry: any[] }) => {
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-bold text-slate-100">Live Torsional Dynamics</h3>
             {currentPt?.is_anomaly ? (
-              <span className="px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded text-xs font-bold shadow-[0_0_10px_rgba(239,68,68,0.3)]">DYSFUNCTION DETECTED</span>
+              <span className="px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded text-xs font-bold shadow-[0_0_10px_rgba(239,68,68,0.3)] animate-pulse">DYSFUNCTION DETECTED</span>
+            ) : risk > 30 ? (
+              <span className="px-3 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-xs font-bold shadow-[0_0_10px_rgba(245,158,11,0.2)] animate-pulse">STRESS BUILD-UP</span>
             ) : (
               <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-xs font-bold">DYNAMICS STABLE</span>
             )}
@@ -43,7 +47,7 @@ const RigTelemetry = ({ telemetry }: { telemetry: any[] }) => {
             {telemetry.map((pt, i) => (
               <div key={i} className="flex-1 mx-0.5 h-full relative flex flex-col justify-end">
                 <div 
-                  className={`w-full transition-all duration-300 rounded-t-sm ${pt.torque_ftlbs > 18000 ? 'bg-gradient-to-t from-red-600 to-amber-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]' : 'bg-gradient-to-t from-amber-600 to-orange-400'}`}
+                  className={`w-full transition-all duration-300 rounded-t-sm ${pt.torque_ftlbs > 18000 ? 'bg-gradient-to-t from-red-600 to-amber-500 shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-pulse' : pt.forecast_risk > 30 ? 'bg-gradient-to-t from-amber-500 to-orange-400 shadow-[0_0_8px_rgba(245,158,11,0.3)]' : 'bg-gradient-to-t from-emerald-600 to-teal-400'}`}
                   style={{ height: `${Math.min((pt.torque_ftlbs / 25000) * 100, 100)}%` }}
                 ></div>
               </div>
@@ -53,19 +57,74 @@ const RigTelemetry = ({ telemetry }: { telemetry: any[] }) => {
       </div>
 
       <div className="col-span-1 flex flex-col h-full bg-slate-900 border border-slate-800 rounded-xl shadow-lg p-6">
-        <h3 className="text-xl font-bold text-slate-100 mb-4 border-b border-slate-800 pb-2">AI Co-Driller</h3>
-        {currentPt?.is_anomaly ? (
-          <div className="p-4 rounded bg-red-500/10 border border-red-500/20 text-red-100">
-            <p className="text-red-400 font-bold mb-2 uppercase">{currentPt.anomaly_type}</p>
-            <p className="text-sm mb-4">{currentPt.recommended_solution}</p>
-            <button className="w-full bg-amber-600 py-2 rounded font-bold shadow-lg shadow-amber-900/20">Execute Auto-Driller</button>
+        <h3 className="text-xl font-bold text-slate-100 mb-4 border-b border-slate-800 pb-2 flex items-center justify-between">
+          <span>AI Co-Driller</span>
+          <span className={`w-2 h-2 rounded-full ${risk > 70 ? 'bg-red-500 animate-ping' : risk > 30 ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500 animate-ping'}`}></span>
+        </h3>
+
+        {/* Live Prognostics Gauge */}
+        <div className="flex flex-col items-center justify-center py-6 mb-6 bg-slate-950/40 rounded-2xl border border-slate-800/60 p-4 relative overflow-hidden">
+          {/* Subtle background glow */}
+          <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 blur-[40px] rounded-full opacity-10 transition-all duration-500 ${risk > 70 ? 'bg-red-500' : risk > 30 ? 'bg-amber-500' : 'bg-emerald-500'}`}></div>
+
+          <div className="relative w-36 h-36 flex items-center justify-center">
+            {/* SVG circular track and gauge indicator */}
+            <svg className="w-full h-full transform -rotate-90">
+              <circle cx="72" cy="72" r="60" stroke="#1e293b" strokeWidth="8" fill="none" className="translate-x-[-1px] translate-y-[-1px]" />
+              <circle 
+                cx="72" 
+                cy="72" 
+                r="60" 
+                stroke={risk > 70 ? "#ef4444" : risk > 30 ? "#f59e0b" : "#10b981"} 
+                strokeWidth="8" 
+                fill="none" 
+                strokeDasharray={`${2 * Math.PI * 60}`}
+                strokeDashoffset={`${2 * Math.PI * 60 * (1 - risk / 100)}`}
+                className="transition-all duration-500 ease-out translate-x-[-1px] translate-y-[-1px]"
+                strokeLinecap="round"
+              />
+            </svg>
+            <div className="absolute flex flex-col items-center text-center">
+              <span className="text-3xl font-mono font-extrabold text-slate-100">{risk.toFixed(0)}%</span>
+              <span className="text-[10px] tracking-widest uppercase text-slate-500 font-semibold mt-0.5">Threat Index</span>
+            </div>
           </div>
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-center opacity-50">
-            <svg className="w-12 h-12 mb-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-            <p>System Operating in Nominal Envelope</p>
-          </div>
-        )}
+
+          <p className="text-xs text-slate-400 mt-4 text-center font-bold">
+            {risk > 70 ? "CRITICAL RISK OF DYSFUNCTION" : risk > 30 ? "CAUTION: STRESS BUILD-UP DETECTED" : "NOMINAL OPERATION"}
+          </p>
+        </div>
+
+        {/* Action Panel */}
+        <div className="flex-1 flex flex-col justify-between">
+          {currentPt?.is_anomaly ? (
+            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-100 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+              <div className="flex items-center space-x-2 text-red-400 font-bold mb-2 uppercase text-sm">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                <span>{currentPt.anomaly_type}</span>
+              </div>
+              <p className="text-xs text-slate-300 mb-4 leading-relaxed">{currentPt.recommended_solution}</p>
+              <button className="w-full bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 py-3 rounded-xl font-bold shadow-lg text-white text-xs tracking-wider uppercase transition-all">Execute Emergency Override</button>
+            </div>
+          ) : risk > 30 ? (
+            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-100 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
+              <div className="flex items-center space-x-2 text-amber-400 font-bold mb-2 uppercase text-sm">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                <span>PREDICTIVE MITIGATION</span>
+              </div>
+              <p className="text-xs text-slate-300 mb-4 leading-relaxed">{currentPt?.proactive_alert || "Warning: Torsional dynamics approaching instability."}</p>
+              <button className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 py-3 rounded-xl font-extrabold shadow-lg text-xs tracking-wider uppercase transition-all">Auto-Throttle Parameters</button>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-center py-8 opacity-60 animate-fade-in">
+              <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 mb-3">
+                <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg>
+              </div>
+              <h4 className="text-sm font-bold text-slate-200 mb-1">Dynamics Stable</h4>
+              <p className="text-xs text-slate-500 max-w-[200px]">Drillstring operating perfectly within safe stress parameters.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
