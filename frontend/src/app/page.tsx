@@ -136,8 +136,32 @@ export default function Dashboard() {
   const [telemetry, setTelemetry] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('Rig Telemetry');
   const [currentDepth, setCurrentDepth] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
   const depthRef = useRef(0);
   const offsetRef = useRef(0);
+
+  // Micro-Frontend SSO Handshake Listener
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.self !== window.top) {
+      setIsAuthenticated(false);
+      
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data && event.data.type === 'SSO_SESSION_RESPONSE') {
+          if (event.data.session) {
+            console.log("Omesham SSO: Identity verified for user:", event.data.session.username);
+            setIsAuthenticated(true);
+          } else {
+            console.warn("Omesham SSO: Active session rejected by parent.");
+          }
+        }
+      };
+      
+      window.addEventListener('message', handleMessage);
+      window.parent.postMessage({ type: 'REQUEST_SSO_SESSION' }, '*');
+      
+      return () => window.removeEventListener('message', handleMessage);
+    }
+  }, []);
 
   // Robust Tab Switching via Hash
   useEffect(() => {
@@ -182,6 +206,15 @@ export default function Dashboard() {
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col h-screen w-full bg-slate-950 items-center justify-center text-slate-400 font-mono text-xs tracking-widest">
+         <div className="w-10 h-10 border-2 border-slate-800 border-t-amber-500 rounded-full animate-spin mb-4"></div>
+         SYNCHRONIZING SECURE NODE IDENTITY...
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-full bg-slate-950 text-slate-300 font-sans overflow-hidden">
