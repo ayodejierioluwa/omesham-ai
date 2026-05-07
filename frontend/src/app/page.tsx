@@ -194,11 +194,11 @@ const BHAControl = ({ currentDepth }: { currentDepth: number }) => {
 export default function Dashboard() {
   const [telemetry, setTelemetry] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('Rig Telemetry');
-  const [currentDepth, setCurrentDepth] = useState(0);
+  const [currentDepth, setCurrentDepth] = useState(12450.0);
   const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [showReportModal, setShowReportModal] = useState(false);
   const [alertLogs, setAlertLogs] = useState<any[]>([]);
-  const depthRef = useRef(0);
+  const depthRef = useRef(12450.0);
 
   // Micro-Frontend SSO Handshake Listener
   useEffect(() => {

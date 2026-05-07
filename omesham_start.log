@@ -23,3 +23,7 @@ INFO:     Application startup complete.
 INFO:     127.0.0.1:56760 - "GET /api/drilling/telemetry_stream HTTP/1.1" 200 OK
 INFO:     127.0.0.1:58984 - "GET /api/drilling/telemetry_stream HTTP/1.1" 200 OK
 ✓ Compiled in 1237ms
+ GET / 200 in 865ms (next.js: 310ms, application-code: 555ms)
+INFO:     127.0.0.1:61264 - "GET /api/drilling/telemetry_stream HTTP/1.1" 200 OK
+✓ Compiled in 582ms
+INFO:     127.0.0.1:61668 - "GET /api/drilling/telemetry_stream HTTP/1.1" 200 OK
