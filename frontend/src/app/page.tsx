@@ -256,6 +256,17 @@ export default function Dashboard() {
           return updated;
         });
 
+        // Post message to parent to power the main executive NOC
+        if (typeof window !== 'undefined') {
+          window.parent.postMessage({
+            type: 'OMESHAM_TELEMETRY_UPDATE',
+            risk: pt.forecast_risk,
+            is_anomaly: pt.is_anomaly,
+            anomaly_type: pt.is_anomaly ? pt.anomaly_type : null,
+            proactive_alert: pt.proactive_alert
+          }, '*');
+        }
+
         // Capture predictive warning alerts and anomalies dynamically for logging
         if (pt.is_anomaly || pt.forecast_risk > 30) {
           const alertType = pt.is_anomaly ? pt.anomaly_type : "Predictive Alert";
@@ -296,6 +307,12 @@ export default function Dashboard() {
     const interval = setInterval(() => {
       depthRef.current += 0.24;
       setCurrentDepth(depthRef.current);
+      if (typeof window !== 'undefined') {
+        window.parent.postMessage({
+          type: 'OMESHAM_DEPTH_UPDATE',
+          depth: depthRef.current
+        }, '*');
+      }
     }, 200);
     return () => clearInterval(interval);
   }, []);

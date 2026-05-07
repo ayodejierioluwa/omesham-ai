@@ -6,7 +6,7 @@ Backend API: http://localhost:8006
 Press Ctrl+C to stop both servers.
 INFO:     Will watch for changes in these directories: ['/Users/macbook/.gemini/antigravity/scratch/omesham_ai/backend']
 INFO:     Uvicorn running on http://0.0.0.0:8006 (Press CTRL+C to quit)
-INFO:     Started reloader process [27926] using StatReload
+INFO:     Started reloader process [28009] using StatReload
 
 > frontend@0.1.0 dev
 > cross-env TURBOPACK=0 next dev -p 3006
@@ -14,109 +14,12 @@ INFO:     Started reloader process [27926] using StatReload
 ▲ Next.js 16.2.4 (Turbopack)
 - Local:         http://localhost:3006
 - Network:       http://192.168.1.83:3006
-✓ Ready in 916ms
+✓ Ready in 1245ms
 
-INFO:     Started server process [27929]
+ GET / 200 in 755ms (next.js: 394ms, application-code: 360ms)
+INFO:     Started server process [28012]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
- GET / 200 in 483ms (next.js: 235ms, application-code: 248ms)
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=0&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=30&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=60&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=90&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=120&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=150&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=180&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=210&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=240&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=270&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=300&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=330&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=360&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=390&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=420&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=450&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=480&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=510&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=540&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=570&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=600&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=630&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=660&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=690&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=720&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=750&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=780&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=810&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=840&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=870&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=900&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=930&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=960&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=990&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=20&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=50&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=80&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=110&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=140&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=170&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55538 - "GET /api/drilling/processed_telemetry?offset=200&limit=30 HTTP/1.1" 200 OK
-WARNING:  StatReload detected changes in 'main.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [27929]
-INFO:     Started server process [27962]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=230&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=230&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=290&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=320&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=350&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=380&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=410&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=440&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=470&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=500&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=530&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=560&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=590&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=620&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=650&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=680&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=710&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=740&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=770&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=800&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=830&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=860&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=890&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=920&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=950&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=980&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=10&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=40&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=70&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=100&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=130&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=160&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=190&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=220&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=250&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=280&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=310&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=340&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=370&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=400&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=430&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=460&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=490&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=520&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=550&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55712 - "GET /api/drilling/processed_telemetry?offset=580&limit=30 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55704 - "GET /api/drilling/processed_telemetry?offset=610&limit=30 HTTP/1.1" 200 OK
-✓ Compiled in 859ms
-INFO:     127.0.0.1:55712 - "GET /api/drilling/telemetry_stream HTTP/1.1" 200 OK
- GET / 200 in 231ms (next.js: 106ms, application-code: 125ms)
- GET / 200 in 68ms (next.js: 7ms, application-code: 61ms)
+INFO:     127.0.0.1:56760 - "GET /api/drilling/telemetry_stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58984 - "GET /api/drilling/telemetry_stream HTTP/1.1" 200 OK
+✓ Compiled in 1237ms
