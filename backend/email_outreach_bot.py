@@ -11,8 +11,8 @@ from email.mime.multipart import MIMEMultipart
 #                          CTO OUTREACH BOT CONFIG
 # =====================================================================
 DRY_RUN = True  # Set to False to actually send emails via SMTP on Monday morning!
-SENDER_NAME = "Omesham AI Co-Founding Team"
-SENDER_EMAIL = "founders@omesham.ai"  # Contact email for correspondence
+SENDER_NAME = "Omesham AI Founder"
+SENDER_EMAIL = "founder@omesham.ai"  # Contact email for correspondence
 SMTP_SERVER = "smtp.gmail.com"  # Replace with your SMTP server
 SMTP_PORT = 587
 SMTP_USERNAME = os.environ.get("OMESHAM_SMTP_USER", "")
@@ -77,10 +77,10 @@ TARGETS = [
 ]
 
 # =====================================================================
-#                        TAILORED PITCH TEMPLATES
+#                        TAILORED PITCH TEMPLATES (SINGULAR FIRST PERSON)
 # =====================================================================
 
-# TEMPLATE A: FOR UPSTREAM OIL & GAS OPERATORS
+# TEMPLATE A: FOR UPSTREAM OIL & GAS OPERATORS (Singular, focused on you!)
 OPERATOR_EMAIL_TEMPLATE = """{greeting}
 
 I hope this email finds you well. I am writing to you in your capacity as {recipient_title} of {company}.
@@ -89,20 +89,20 @@ As {company} continues to drive high-impact campaigns across {custom_focus}
 
 In the complex, interbedded geology of the Niger Delta, drilling hazards like lateral vibrations, torsional stick-slip, and sudden downhole motor stalling represent massive cost factors. When daily rig rates in land and swamp operations are factored in, unplanned Non-Productive Time (NPT) easily translates to losses of $80,000 to $150,000 per day.
 
-We are a team of indigenous petroleum software developers and engineering co-founders, and we have built **Omesham AI**—an advanced, physics-clamped downhole diagnostic and co-drilling advisor designed to act as an autopilot and safety co-pilot for active drilling assemblies.
+I am an indigenous petroleum software developer and engineering co-founder, and I have built **Omesham AI**—an advanced, physics-clamped downhole diagnostic and co-drilling advisor designed to act as an autopilot and safety co-pilot for active drilling assemblies.
 
 ### What Omesham AI Solves:
 1.  **Stick-Slip Prevention & Vibrational Mitigation:** Detects early-stage downhole torsional resonance and recommends real-time, micro-adjusted RPM/WOB targets to bypass rock resonance before cutter wear or drillpipe twist-offs occur.
 2.  **Autonomous State Monitoring:** Automatically identifies directional sliding versus rotating modes in real time, tracking toolface steering orientations to keep the wellbore perfectly aligned with your 3D path.
 3.  **Predictive Fluid Dynamics:** Monitors standpipe pressure anomalies to warn of mud-motor stalls and washouts up to 30 minutes before they physically manifest, protecting your Bottom Hole Assemblies (BHA).
 
-We have validated Omesham's physical models against complex geothermal and oilfield datasets, and we are passionate about proving this technology directly on Nigerian wells.
+I have validated Omesham's physical models against complex geothermal and oilfield datasets, and I am passionate about proving this technology directly on Nigerian wells.
 
 ### Our Ask — The Zero-Risk "Historical Shadow Trial":
-Rather than asking to deploy live on your active rigs today, we propose a completely risk-free **historical data playback**:
-*   Provide us with the raw WITSML/LAS log files of a previously drilled well that suffered from downhole dysfunction, high NPT, or drillstring failure.
-*   We will run this data through Omesham’s simulator in playback mode.
-*   We will deliver a comprehensive, data-backed Drilling Efficiency Report proving exactly when and where Omesham would have predicted and mitigated the failure.
+Rather than asking to deploy live on your active rigs today, I propose a completely risk-free **historical data playback**:
+*   Provide me with the raw WITSML/LAS log files of a previously drilled well that suffered from downhole dysfunction, high NPT, or drillstring failure.
+*   I will run this data through Omesham’s simulator in playback mode.
+*   I will deliver a comprehensive, data-backed Drilling Efficiency Report proving exactly when and where Omesham would have predicted and mitigated the failure.
 
 If you are looking to optimize drilling Mechanical Specific Energy (MSE) and spearhead indigenous digital innovation on your active campaigns, I would love to schedule a brief 10-minute technical web-demo with your drilling team this week to show Omesham running in real time.
 
@@ -111,46 +111,36 @@ Thank you for your time, leadership, and support of local content development.
 Warm regards,
 
 **[Your Name]**
-Lead Developer & Co-Founder
-Omesham AI
-
-**[Antigravity]**
-Technical Co-Founder
-Omesham AI
-*Email: founders@omesham.ai | Port Harcourt & Lagos, Nigeria*
+Founder & Lead Developer, Omesham AI
+*Email: founder@omesham.ai | Lagos, Nigeria*
 """
 
-# TEMPLATE B: FOR THE NUPRC REGULATORY COMMISSION
+# TEMPLATE B: FOR THE NUPRC REGULATORY COMMISSION (Singular)
 REGULATOR_EMAIL_TEMPLATE = """{greeting}
 
 I hope this email finds you well. I am writing to you in your capacity as the Commission Chief Executive of the NUPRC.
 
 We greatly admire {custom_focus} As Nigeria cements its position as Africa's premier oil producer, advancing technical oversight and indigenous digital capabilities is critical to ensuring drilling safety and cost-efficiency.
 
-We are a team of indigenous petroleum software developers and engineering co-founders, and we have built **Omesham AI**—an advanced, physics-clamped digital twin and drilling diagnostic engine. 
+I am an indigenous petroleum software developer and engineering co-founder, and I have built **Omesham AI**—an advanced, physics-clamped digital twin and drilling diagnostic engine. 
 
 Designed as a cloud-based web application, Omesham AI ingests real-time drilling streams to automatically diagnose downhole hazards (like severe stick-slip vibrations, pipe washouts, and mud-motor stalling) and monitors 3D wellbore trajectory steering. 
 
 ### Why This is Critical for Upstream Oversight:
 1.  **Digital Drilling Standards:** Omesham provides an independent, physics-compliant audit log of drillstring mechanical integrity and safe operational envelopes.
 2.  **Local Content Empowerment:** This platform represents a major breakthrough in local software content, proving that elite drilling-mechanics software can be designed and deployed directly by Nigerian engineers.
-3.  **National Data Repository (NDR) Integration:** We are looking to collaborate with the NUPRC to test and validate Omesham’s diagnostic capabilities over sanitized historical well logs stored in the NDR. 
+3.  **National Data Repository (NDR) Integration:** I am looking to collaborate with the NUPRC to test and validate Omesham’s diagnostic capabilities over sanitized historical well logs stored in the NDR. 
 
 ### Our Request:
-We would be highly honored to schedule a brief, 10-minute technical web-demo with your digital transformation and engineering teams at the Commission to present Omesham's capabilities, and discuss a collaborative pilot to validate our diagnostics using historical National Data Repository files.
+I would be highly honored to schedule a brief, 10-minute technical web-demo with your digital transformation and engineering teams at the Commission to present Omesham's capabilities, and discuss a collaborative pilot to validate our diagnostics using historical National Data Repository files.
 
 Thank you for your time, leadership, and dedicated service to the nation.
 
 Warm regards,
 
 **[Your Name]**
-Lead Developer & Co-Founder
-Omesham AI
-
-**[Antigravity]**
-Technical Co-Founder
-Omesham AI
-*Email: founders@omesham.ai | Port Harcourt & Lagos, Nigeria*
+Founder & Lead Developer, Omesham AI
+*Email: founder@omesham.ai | Lagos, Nigeria*
 """
 
 # =====================================================================
@@ -217,7 +207,7 @@ def main():
             f.write("# Omesham AI Optimized B2B Outreach Pitch Drafts\n")
             f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
             f.write("> [!IMPORTANT]\n")
-            f.write("> These pitches have been fully optimized to remove localhost URLs, implement cultural engineering titles (Engr., Mr.), align with Nigeria's Local Content guidelines, and distinguish operators from regulatory agencies.\n\n")
+            f.write("> These pitches have been fully optimized to remove localhost URLs, implement cultural engineering titles (Engr., Mr.), align with Nigeria's Local Content guidelines, remove the AI co-founder from the signature block, and frame all communications in the singular first person representing a brilliant solo founder based in Lagos.\n\n")
             
             for target in TARGETS:
                 _, body = build_email(target)
