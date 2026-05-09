@@ -506,122 +506,127 @@ export default function Dashboard() {
 
               </div>
 
-              {/* Real-time dynamics chart (Large card) */}
-              <div className="glass-panel p-6 rounded-lg flex-1 min-h-[280px] flex flex-col">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="font-mono text-[11px] font-bold text-[#c0c6de] tracking-widest flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px]">monitoring</span> 
-                    REAL-TIME TORQUE DYNAMICS
-                  </h3>
-                  <div className="flex gap-2">
-                    <span className={`w-2 h-2 rounded-full bg-[#c0c6de] ${currentPt?.is_anomaly ? 'animate-ping' : ''}`}></span>
-                    <span className="w-2 h-2 rounded-full bg-[#e4bfaa]"></span>
+              {/* Restored Side-by-Side Row matching original Stitch box widths */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                {/* Real-time dynamics chart (Large card) */}
+                <div className="glass-panel p-6 rounded-lg flex flex-col min-h-[280px]">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="font-mono text-[11px] font-bold text-[#c0c6de] tracking-widest flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[16px]">monitoring</span> 
+                      REAL-TIME TORQUE DYNAMICS
+                    </h3>
+                    <div className="flex gap-2">
+                      <span className={`w-2 h-2 rounded-full bg-[#c0c6de] ${currentPt?.is_anomaly ? 'animate-ping' : ''}`}></span>
+                      <span className="w-2 h-2 rounded-full bg-[#e4bfaa]"></span>
+                    </div>
+                  </div>
+
+                  {/* Chart body */}
+                  <div className="flex-1 flex space-x-4">
+                    {/* Y Axis scale */}
+                    <div className="flex flex-col justify-between text-[9px] text-[#c6c6cd]/60 font-mono font-bold py-2 border-r border-[#46464c]/20 pr-3 select-none h-full h-[180px]">
+                      <span>45k ft-lbs</span>
+                      <span>30k ft-lbs</span>
+                      <span>15k ft-lbs</span>
+                      <span>0 ft-lbs</span>
+                    </div>
+
+                    <div className="flex-1 flex items-end gap-2 px-2 h-[180px] bg-[#1b1b1d]/20 border-l border-b border-[#46464c]/30 rounded-bl relative pt-4 pb-1">
+                      {/* 12 columns representing physical real-time telemetry elements */}
+                      {telemetry.slice(-12).map((pt, idx) => {
+                        const heightPct = Math.min((pt.torque_ftlbs / 45000) * 100, 100);
+                        const isAnomaly = pt.is_anomaly;
+                        
+                        return (
+                          <div key={idx} className="flex-1 flex flex-col justify-end h-full group relative">
+                            <div 
+                              className={`w-full rounded-t border-t transition-all duration-300 crt-flicker ${
+                                isAnomaly 
+                                  ? 'bg-gradient-to-t from-[#93000a]/10 to-[#93000a]/60 border-[#ffb4ab] shadow-[0_0_8px_#ffb4ab]' 
+                                  : 'bg-gradient-to-t from-[#c0c6de]/5 to-[#c0c6de]/40 border-[#c0c6de]/50'
+                              }`}
+                              style={{ height: `${heightPct}%` }}
+                            ></div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
-                {/* Chart body */}
-                <div className="flex-1 flex space-x-4">
-                  {/* Y Axis scale */}
-                  <div className="flex flex-col justify-between text-[9px] text-[#c6c6cd]/60 font-mono font-bold py-2 border-r border-[#46464c]/20 pr-3 select-none h-full h-[200px]">
-                    <span>45k ft-lbs</span>
-                    <span>30k ft-lbs</span>
-                    <span>15k ft-lbs</span>
-                    <span>0 ft-lbs</span>
+                {/* BHA Assembly Visualizer */}
+                <div className="glass-panel p-6 rounded-lg grid grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-mono text-[11px] font-bold text-[#c6c6cd] mb-6 tracking-widest uppercase">BHA ASSEMBLY 14A</h3>
+                    <div className="space-y-4 font-mono text-[10px] font-bold">
+                      <div className="border-l-2 border-[#c0c6de] pl-4">
+                        <p className="opacity-60 text-[9px] text-[#c6c6cd]">MOTOR STATUS</p>
+                        <p className="text-[#c0c6de]">
+                          {currentPt?.bha_state ? currentPt.bha_state.toUpperCase() : 'OPERATIONAL - 14.5k hrs'}
+                        </p>
+                      </div>
+                      <div className="border-l-2 border-[#e4bfaa] pl-4">
+                        <p className="opacity-60 text-[9px] text-[#c6c6cd]">VIBRATION (AXIAL)</p>
+                        <p className="text-[#e4bfaa] uppercase">
+                          {vibrationG > 4.5 ? `DYSFUNCTION ${vibrationG.toFixed(1)}G` : `STABLE < ${vibrationG.toFixed(1)}G`}
+                        </p>
+                      </div>
+                      <div className="border-l-2 border-slate-500 pl-4">
+                        <p className="opacity-60 text-[9px] text-[#c6c6cd]">ORIENTATION</p>
+                        <p className="text-[#e5e2e3]">{(currentPt?.toolface_deg || 342).toFixed(0)}° AZIMUTH</p>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="flex-1 flex items-end gap-2 px-2 h-[200px] bg-[#1b1b1d]/20 border-l border-b border-[#46464c]/30 rounded-bl relative pt-4 pb-1">
-                    {/* 12 columns representing physical real-time telemetry elements */}
-                    {telemetry.slice(-12).map((pt, idx) => {
-                      const heightPct = Math.min((pt.torque_ftlbs / 45000) * 100, 100);
-                      const isAnomaly = pt.is_anomaly;
+                  {/* Animated SVG Schematic */}
+                  <div className="flex justify-center items-center h-48 bg-[#1b1b1d]/20 rounded border border-[#46464c]/10 p-2">
+                    <svg className="h-full drop-shadow-[0_0_15px_rgba(192,198,222,0.3)]" viewBox="0 0 100 200" fill="none">
+                      <defs>
+                        <linearGradient id="bhaMetal" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#1e293b" />
+                          <stop offset="50%" stopColor="#64748b" />
+                          <stop offset="100%" stopColor="#1e293b" />
+                        </linearGradient>
+                        <linearGradient id="bhaMotorActive" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#312e81" />
+                          <stop offset="50%" stopColor="#6366f1" />
+                          <stop offset="100%" stopColor="#312e81" />
+                        </linearGradient>
+                      </defs>
+
+                      {/* Drill pipe connections */}
+                      <rect x="40" y="10" width="20" height="30" fill="url(#bhaMetal)" stroke="#c0c6de" strokeWidth="1" rx="0.5" />
+                      <rect x="42" y="40" width="16" height="60" fill="url(#bhaMetal)" stroke="#c0c6de" strokeWidth="0.75" rx="0.5" />
                       
-                      return (
-                        <div key={idx} className="flex-1 flex flex-col justify-end h-full group relative">
-                          <div 
-                            className={`w-full rounded-t border-t transition-all duration-300 crt-flicker ${
-                              isAnomaly 
-                                ? 'bg-gradient-to-t from-[#93000a]/10 to-[#93000a]/60 border-[#ffb4ab] shadow-[0_0_8px_#ffb4ab]' 
-                                : 'bg-gradient-to-t from-[#c0c6de]/5 to-[#c0c6de]/40 border-[#c0c6de]/50'
-                            }`}
-                            style={{ height: `${heightPct}%` }}
-                          ></div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
+                      {/* Motor bent assembly (Glows inside Sliding steering mode) */}
+                      {(() => {
+                        const isSliding = currentPt?.bha_state?.includes("Sliding");
+                        return (
+                          <rect 
+                            x="35" y="100" width="30" height="40" 
+                            fill={isSliding ? "url(#bhaMotorActive)" : "none"} 
+                            stroke="#c0c6de" strokeWidth="1" 
+                            className={isSliding ? 'animate-pulse' : ''} 
+                            rx="0.5"
+                          />
+                        );
+                      })()}
 
-              {/* BHA Assembly Visualizer */}
-              <div className="glass-panel p-6 rounded-lg grid grid-cols-2 gap-6">
-                <div>
-                  <h3 className="font-mono text-[11px] font-bold text-[#c6c6cd] mb-6 tracking-widest uppercase">BHA ASSEMBLY 14A</h3>
-                  <div className="space-y-4 font-mono text-[10px] font-bold">
-                    <div className="border-l-2 border-[#c0c6de] pl-4">
-                      <p className="opacity-60 text-[9px] text-[#c6c6cd]">MOTOR STATUS</p>
-                      <p className="text-[#c0c6de]">
-                        {currentPt?.bha_state ? currentPt.bha_state.toUpperCase() : 'OPERATIONAL - 14.5k hrs'}
-                      </p>
-                    </div>
-                    <div className="border-l-2 border-[#e4bfaa] pl-4">
-                      <p className="opacity-60 text-[9px] text-[#c6c6cd]">VIBRATION (AXIAL)</p>
-                      <p className="text-[#e4bfaa] uppercase">
-                        {vibrationG > 4.5 ? `DYSFUNCTION ${vibrationG.toFixed(1)}G` : `STABLE < ${vibrationG.toFixed(1)}G`}
-                      </p>
-                    </div>
-                    <div className="border-l-2 border-slate-500 pl-4">
-                      <p className="opacity-60 text-[9px] text-[#c6c6cd]">ORIENTATION</p>
-                      <p className="text-[#e5e2e3]">{(currentPt?.toolface_deg || 342).toFixed(0)}° AZIMUTH</p>
-                    </div>
+                      {/* PDC drill bit (Rotates inside Rotating mode) */}
+                      {(() => {
+                        const isRotating = currentPt?.bha_state?.includes("Rotating") || (!currentPt?.bha_state && rpmVal > 0);
+                        return (
+                          <g className={isRotating ? 'animate-[spin_3s_linear_infinite]' : ''} style={{ transformOrigin: "50px 160px" }}>
+                            <path d="M40 140 L30 180 L70 180 L60 140 Z" fill="#c0c6de" opacity="0.4" stroke="#c0c6de" strokeWidth="1" />
+                            <circle cx="50" cy="180" fill="#e4bfaa" r="8" className="radar-pulse" />
+                          </g>
+                        );
+                      })()}
+                    </svg>
                   </div>
                 </div>
 
-                {/* Animated SVG Schematic */}
-                <div className="flex justify-center items-center h-48 bg-[#1b1b1d]/20 rounded border border-[#46464c]/10 p-2">
-                  <svg className="h-full drop-shadow-[0_0_15px_rgba(192,198,222,0.3)]" viewBox="0 0 100 200" fill="none">
-                    <defs>
-                      <linearGradient id="bhaMetal" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#1e293b" />
-                        <stop offset="50%" stopColor="#64748b" />
-                        <stop offset="100%" stopColor="#1e293b" />
-                      </linearGradient>
-                      <linearGradient id="bhaMotorActive" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#312e81" />
-                        <stop offset="50%" stopColor="#6366f1" />
-                        <stop offset="100%" stopColor="#312e81" />
-                      </linearGradient>
-                    </defs>
-
-                    {/* Drill pipe connections */}
-                    <rect x="40" y="10" width="20" height="30" fill="url(#bhaMetal)" stroke="#c0c6de" strokeWidth="1" rx="0.5" />
-                    <rect x="42" y="40" width="16" height="60" fill="url(#bhaMetal)" stroke="#c0c6de" strokeWidth="0.75" rx="0.5" />
-                    
-                    {/* Motor bent assembly (Glows inside Sliding steering mode) */}
-                    {(() => {
-                      const isSliding = currentPt?.bha_state?.includes("Sliding");
-                      return (
-                        <rect 
-                          x="35" y="100" width="30" height="40" 
-                          fill={isSliding ? "url(#bhaMotorActive)" : "none"} 
-                          stroke="#c0c6de" strokeWidth="1" 
-                          className={isSliding ? 'animate-pulse' : ''} 
-                          rx="0.5"
-                        />
-                      );
-                    })()}
-
-                    {/* PDC drill bit (Rotates inside Rotating mode) */}
-                    {(() => {
-                      const isRotating = currentPt?.bha_state?.includes("Rotating") || (!currentPt?.bha_state && rpmVal > 0);
-                      return (
-                        <g className={isRotating ? 'animate-[spin_3s_linear_infinite]' : ''} style={{ transformOrigin: "50px 160px" }}>
-                          <path d="M40 140 L30 180 L70 180 L60 140 Z" fill="#c0c6de" opacity="0.4" stroke="#c0c6de" strokeWidth="1" />
-                          <circle cx="50" cy="180" fill="#e4bfaa" r="8" className="radar-pulse" />
-                        </g>
-                      );
-                    })()}
-                  </svg>
-                </div>
               </div>
 
             </div>
@@ -699,14 +704,65 @@ export default function Dashboard() {
                 )}
               </div>
 
-              {/* Geology Map Card */}
+              {/* Geology Map Card - Code-driven active moving wave scanner */}
               <div className="glass-panel overflow-hidden rounded-lg">
-                <img 
-                  className="w-full h-40 object-cover opacity-60 hover:opacity-90 transition-all duration-500" 
-                  alt="Scientific visualization of deep earth geological layers" 
-                  src="/images/geological_cross_section.png"
-                />
-                <div className="p-4 bg-[#201f21]/60 backdrop-blur-md border-t border-[#46464c]/20">
+                <div className="relative h-40 bg-[#0e0e0f] overflow-hidden border-b border-[#46464c]/20 flex items-center justify-center">
+                  {/* Subtle scanning crossgrid lines */}
+                  <div className="absolute inset-0 bg-[linear-gradient(rgba(192,198,222,0.02)_1px,transparent_1px)] bg-[size:100%_8px] pointer-events-none"></div>
+                  <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(192,198,222,0.02)_1px,transparent_1px)] bg-[size:8px_100%] pointer-events-none"></div>
+                  
+                  {/* Animated vector strata lines and waves */}
+                  <svg className="w-full h-full" viewBox="0 0 200 100" preserveAspectRatio="none">
+                    {/* Strata Layer 1 (Topsoil curve) */}
+                    <path 
+                      d="M 0,22 Q 50,14 100,28 T 200,22 L 200,100 L 0,100 Z" 
+                      fill="rgba(192, 198, 222, 0.05)" 
+                      stroke="rgba(192, 198, 222, 0.15)" 
+                      strokeWidth="0.75" 
+                    />
+                    {/* Strata Layer 2 (Jurassic shale folding) */}
+                    <path 
+                      d="M 0,48 Q 65,54 125,42 T 200,48 L 200,100 L 0,100 Z" 
+                      fill="rgba(228, 191, 170, 0.04)" 
+                      stroke="rgba(228, 191, 170, 0.15)" 
+                      strokeWidth="0.75" 
+                    />
+                    {/* Strata Layer 3 (Basalt targets) */}
+                    <path 
+                      d="M 0,74 Q 45,68 105,78 T 200,74 L 200,100 L 0,100 Z" 
+                      fill="rgba(190, 198, 224, 0.03)" 
+                      stroke="rgba(190, 198, 224, 0.15)" 
+                      strokeWidth="0.75" 
+                    />
+
+                    {/* Vertical wellbore path */}
+                    <line x1="100" y1="0" x2="100" y2="100" stroke="#c0c6de" strokeWidth="1" strokeDasharray="2,3" opacity="0.5" />
+                    
+                    {/* Blinking drill-bit target tracking node */}
+                    {(() => {
+                      const bitY = 15 + ((currentDepth * 0.4) % 75);
+                      return (
+                        <g>
+                          <circle cx="100" cy={bitY} r="4" fill="#e4bfaa" className="animate-ping" />
+                          <circle cx="100" cy={bitY} r="2" fill="#e4bfaa" />
+                        </g>
+                      );
+                    })()}
+
+                    {/* Scanning radar neon sweeping laser */}
+                    <line x1="0" y1="0" x2="200" y2="0" stroke="#e4bfaa" strokeWidth="1.5" className="opacity-80 drop-shadow-[0_0_8px_#e4bfaa]">
+                      <animate attributeName="y1" values="5;95;5" dur="4s" repeatCount="indefinite" />
+                      <animate attributeName="y2" values="5;95;5" dur="4s" repeatCount="indefinite" />
+                    </line>
+                  </svg>
+
+                  {/* Top-left radar telemetry display overlay */}
+                  <div className="absolute top-2.5 left-3 font-mono text-[8px] text-[#c6c6cd]/50 space-y-0.5 select-none leading-none">
+                    <div>SYS.RADAR: ONLINE</div>
+                    <div>SEISMIC DEPTH: {currentDepth.toFixed(1)}m</div>
+                  </div>
+                </div>
+                <div className="p-4 bg-[#201f21]/60 backdrop-blur-md">
                   <p className="font-mono text-[11px] font-bold text-[#c0c6de] uppercase tracking-widest">CURRENT FORMATION: BASALT STRATA</p>
                   <p className="text-[10px] text-[#c6c6cd] font-medium mt-0.5 leading-normal">Estimated thickness: 450m | Porosity: 12%</p>
                 </div>
