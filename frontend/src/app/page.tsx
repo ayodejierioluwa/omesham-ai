@@ -2,341 +2,347 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-// Components defined outside to ensure stable rendering
-const RigTelemetry = ({ telemetry, currentDepth }: { telemetry: any[], currentDepth: number }) => {
+// =====================================================================
+//                       SYNTHETIC CYBERNETIC SOUNDS
+// =====================================================================
+const playRadarBeep = (frequency = 1100, duration = 0.12, type: OscillatorType = "sine") => {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    
+    const ctx = new AudioContextClass();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = type;
+    osc.frequency.setValueAtTime(frequency, ctx.currentTime);
+    
+    // Smooth pitch sweep for a futuristic radar sound
+    osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + duration);
+    
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + duration);
+  } catch (err) {
+    console.warn("Audio Context init failed or blocked:", err);
+  }
+};
+
+// =====================================================================
+//                       COMPONENT: RIG TELEMETRY
+// =====================================================================
+const RigTelemetry = ({ 
+  telemetry, 
+  currentDepth, 
+  onFeedbackSubmit, 
+  feedbackToast 
+}: { 
+  telemetry: any[], 
+  currentDepth: number,
+  onFeedbackSubmit: (correction: 'correct' | 'false_alarm') => void,
+  feedbackToast: string | null
+}) => {
   const currentPt = telemetry.length > 0 ? telemetry[telemetry.length - 1] : null;
   const risk = currentPt?.forecast_risk || 12;
 
-  const [feedbackToast, setFeedbackToast] = React.useState<string | null>(null);
-
-  const onFeedbackSubmit = async (correction: 'correct' | 'false_alarm') => {
-    if (!currentPt) return;
-    try {
-      const res = await fetch("http://127.0.0.1:8006/api/drilling/feedback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          torque_ftlbs: currentPt.torque_ftlbs,
-          rpm: currentPt.rpm,
-          wob_klbs: currentPt.wob_klbs,
-          spp_psi: currentPt.spp_psi,
-          rop_fph: currentPt.rop_fph,
-          formation_type: currentPt.formation_type,
-          original_anomaly: currentPt.anomaly_type,
-          operator_correction: correction
-        })
-      });
-      const data = await res.json();
-      if (data.status === "success") {
-        setFeedbackToast(`Omesham AI Calibrated! Brain threshold envelope has adapted to: ${correction === 'false_alarm' ? 'Ignore High Torque' : 'Reinforce Boundary'}`);
-        setTimeout(() => setFeedbackToast(null), 6000);
-      }
-    } catch (err) {
-      console.error("Feedback submit error:", err);
-    }
-  };
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full pb-8">
-      {/* Physics Gauges */}
+      {/* Physics Gauges and Dynamics Chart */}
       <div className="col-span-1 lg:col-span-2 flex flex-col space-y-6">
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg flex flex-col justify-center relative overflow-hidden">
-            <div className="absolute bottom-0 left-0 w-full h-1 bg-teal-500 animate-pulse"></div>
-            <p className="text-[10px] text-slate-400 mb-1 uppercase tracking-wider font-semibold">Well Depth</p>
-            <p className="text-xl lg:text-2xl font-mono font-bold text-slate-100">{currentDepth !== undefined ? currentDepth.toFixed(0) : (currentPt?.depth_ft || 12450).toFixed(0)} <span className="text-xs text-slate-500">ft</span></p>
-          </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg flex flex-col justify-center">
-            <p className="text-[10px] text-slate-400 mb-1 uppercase tracking-wider font-semibold">Weight on Bit</p>
-            <p className="text-xl lg:text-2xl font-mono font-bold text-slate-100">{currentPt?.wob_klbs !== undefined ? currentPt.wob_klbs.toFixed(1) : "0.0"} <span className="text-xs text-slate-500">klbs</span></p>
-          </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg flex flex-col justify-center relative overflow-hidden">
-            <div className={`absolute bottom-0 left-0 w-full h-1 ${currentPt?.rpm && currentPt.rpm < 80 ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`}></div>
-            <p className="text-[10px] text-slate-400 mb-1 uppercase tracking-wider font-semibold">Rotary Speed</p>
-            <p className={`text-xl lg:text-2xl font-mono font-bold ${currentPt?.rpm && currentPt.rpm < 80 ? 'text-red-400' : 'text-slate-100'}`}>{currentPt?.rpm !== undefined ? currentPt.rpm.toFixed(0) : "0"} <span className="text-xs text-slate-500">rpm</span></p>
-          </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg flex flex-col justify-center relative overflow-hidden">
-            <div className={`absolute bottom-0 left-0 w-full h-1 ${currentPt?.rop_fph && currentPt.rop_fph < 50 ? 'bg-amber-500' : 'bg-emerald-500'}`}></div>
-            <p className="text-[10px] text-slate-400 mb-1 uppercase tracking-wider font-semibold">ROP (Penetration)</p>
-            <p className="text-xl lg:text-2xl font-mono font-bold text-slate-100">{currentPt?.rop_fph !== undefined ? currentPt.rop_fph.toFixed(0) : "0"} <span className="text-xs text-slate-500">fph</span></p>
-          </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg flex flex-col justify-center">
-            <p className="text-[10px] text-slate-400 mb-1 uppercase tracking-wider font-semibold">Standpipe Pres.</p>
-            <p className={`text-xl lg:text-2xl font-mono font-bold ${currentPt?.spp_psi && currentPt.spp_psi < 2400 ? 'text-red-400' : 'text-slate-100'}`}>{currentPt?.spp_psi !== undefined ? currentPt.spp_psi.toFixed(0) : "0"} <span className="text-xs text-slate-500">psi</span></p>
-          </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg flex flex-col justify-center relative overflow-hidden">
-            <div className={`absolute bottom-0 left-0 w-full h-1 ${currentPt?.bha_state?.includes('Sliding') ? 'bg-indigo-500 animate-pulse' : 'bg-emerald-500'}`}></div>
-            <p className="text-[10px] text-slate-400 mb-1 uppercase tracking-wider font-semibold">Active BHA State</p>
-            <p className={`text-xs lg:text-sm font-bold tracking-wider uppercase ${currentPt?.bha_state?.includes('Sliding') ? 'text-indigo-400' : 'text-emerald-400'}`}>
-              {(currentPt?.bha_state || "ROTARY").toUpperCase().replace(" (DIRECTIONAL)", "").replace(" (ROTARY)", "")}
+        
+        {/* Core Metric Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          
+          {/* Well Depth Card */}
+          <div className="glass-panel p-5 relative overflow-hidden group rounded-xl">
+            <div className="absolute top-0 right-0 w-12 h-12 opacity-5 group-hover:opacity-10 transition-opacity">
+              <span className="material-symbols-outlined text-4xl text-primary">straighten</span>
+            </div>
+            <p className="font-label-caps text-label-caps text-on-surface-variant mb-3 uppercase tracking-wider font-semibold">Well Depth (MD)</p>
+            <p className="font-telemetry-lg text-telemetry-lg text-primary font-mono">
+              {currentDepth.toFixed(1)} <span className="text-xs text-on-surface-variant">ft</span>
             </p>
+            <div className="mt-4 h-1 w-full bg-surface-container-highest rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-primary shadow-[0_0_8px_rgba(192,198,222,0.8)] transition-all duration-300"
+                style={{ width: `${Math.min((currentDepth / 15000) * 100, 100)}%` }}
+              ></div>
+            </div>
           </div>
+
+          {/* Weight on Bit Card */}
+          <div className="glass-panel p-5 relative overflow-hidden group rounded-xl">
+            <p className="font-label-caps text-label-caps text-on-surface-variant mb-3 uppercase tracking-wider font-semibold">WOB (Load)</p>
+            <p className="font-telemetry-lg text-telemetry-lg text-secondary font-mono">
+              {currentPt?.wob_klbs !== undefined ? currentPt.wob_klbs.toFixed(1) : "0.0"} <span className="text-xs text-on-surface-variant">klbs</span>
+            </p>
+            <div className="mt-4 h-1 w-full bg-surface-container-highest rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-secondary shadow-[0_0_8px_rgba(190,198,224,0.8)] transition-all duration-300"
+                style={{ width: `${Math.min(((currentPt?.wob_klbs || 0) / 50) * 100, 100)}%` }}
+              ></div>
+            </div>
+          </div>
+
+          {/* Rotational RPM Card */}
+          <div className="glass-panel p-5 relative overflow-hidden group rounded-xl">
+            <div className={`absolute top-0 left-0 w-full h-0.5 ${currentPt?.rpm && currentPt.rpm < 80 ? 'bg-red-500 animate-pulse' : 'bg-primary/20'}`}></div>
+            <p className="font-label-caps text-label-caps text-on-surface-variant mb-3 uppercase tracking-wider font-semibold">Bit Rotation</p>
+            <p className={`font-telemetry-lg text-telemetry-lg font-mono ${currentPt?.rpm && currentPt.rpm < 80 ? 'text-red-400' : 'text-tertiary'}`}>
+              {currentPt?.rpm !== undefined ? currentPt.rpm.toFixed(0) : "0"} <span className="text-xs text-on-surface-variant">RPM</span>
+            </p>
+            <div className="mt-4 h-1 w-full bg-surface-container-highest rounded-full overflow-hidden">
+              <div 
+                className={`h-full shadow-lg transition-all duration-300 ${currentPt?.rpm && currentPt.rpm < 80 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'bg-tertiary shadow-[0_0_8px_rgba(228,191,170,0.8)]'}`}
+                style={{ width: `${Math.min(((currentPt?.rpm || 0) / 220) * 100, 100)}%` }}
+              ></div>
+            </div>
+          </div>
+
+          {/* Rate of Penetration (ROP) Card */}
+          <div className="glass-panel p-5 relative overflow-hidden group rounded-xl">
+            <p className="font-label-caps text-label-caps text-on-surface-variant mb-3 uppercase tracking-wider font-semibold">Rate of Pen.</p>
+            <p className="font-telemetry-lg text-telemetry-lg text-primary font-mono">
+              {currentPt?.rop_fph !== undefined ? currentPt.rop_fph.toFixed(1) : "0.0"} <span className="text-xs text-on-surface-variant">ft/hr</span>
+            </p>
+            <div className="mt-4 h-1 w-full bg-surface-container-highest rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-primary shadow-[0_0_8px_rgba(192,198,222,0.8)] transition-all duration-300"
+                style={{ width: `${Math.min(((currentPt?.rop_fph || 0) / 120) * 100, 100)}%` }}
+              ></div>
+            </div>
+          </div>
+
         </div>
 
-        <div className="flex-1 bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-lg flex flex-col min-h-[350px]">
+        {/* Live Dynamics Chart Area */}
+        <div className="glass-panel p-6 rounded-xl flex flex-col min-h-[350px]">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-slate-100">Live Torsional Dynamics</h3>
-            {currentPt?.is_anomaly ? (
-              <span className="px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded text-xs font-bold shadow-[0_0_10px_rgba(239,68,68,0.3)] animate-pulse">DYSFUNCTION DETECTED</span>
-            ) : risk > 30 ? (
-              <span className="px-3 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-xs font-bold shadow-[0_0_10px_rgba(245,158,11,0.2)] animate-pulse">STRESS BUILD-UP</span>
-            ) : (
-              <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-xs font-bold">DYNAMICS STABLE</span>
-            )}
+            <h3 className="font-label-caps text-label-caps text-primary tracking-widest flex items-center gap-2">
+              <span className="material-symbols-outlined text-[16px]">monitoring</span> 
+              REAL-TIME TORQUE DYNAMICS
+            </h3>
+            <div className="flex items-center gap-3">
+              {currentPt?.is_anomaly ? (
+                <span className="px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded text-[10px] font-bold shadow-[0_0_12px_rgba(239,68,68,0.35)] animate-pulse uppercase tracking-wider">dysfunction active</span>
+              ) : risk > 30 ? (
+                <span className="px-3 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-[10px] font-bold animate-pulse uppercase tracking-wider">vibration warning</span>
+              ) : (
+                <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-[10px] font-bold uppercase tracking-wider">dynamics stable</span>
+              )}
+            </div>
           </div>
-          
-          {/* Chart Area with Axis Labels */}
+
           <div className="flex-1 flex space-x-4">
-            {/* Y-Axis scale label bar */}
-            <div className="flex flex-col justify-between text-[9px] text-slate-500 font-mono font-bold py-2 border-r border-slate-850/60 pr-2 select-none h-[220px]">
+            {/* Torque scale labels */}
+            <div className="flex flex-col justify-between text-[9px] text-slate-500 font-mono font-bold py-2 border-r border-outline-variant/20 pr-3 select-none h-[220px]">
               <span>45k ft-lbs</span>
               <span>30k ft-lbs</span>
               <span>15k ft-lbs</span>
               <span>0 ft-lbs</span>
             </div>
-            
-            <div className="flex-1 flex flex-col">
-              {/* Plot Area */}
-              <div className="h-[220px] w-full relative border-l border-b border-slate-800 flex items-end justify-between px-2 pt-8 pb-2 bg-slate-950/20 rounded-br">
-                {/* Horizontal grid reference lines */}
-                <div className="absolute inset-x-0 top-1/3 border-t border-slate-850/10 pointer-events-none"></div>
-                <div className="absolute inset-x-0 top-2/3 border-t border-slate-850/10 pointer-events-none"></div>
+
+            <div className="flex-1 flex items-end gap-2 px-2 h-[220px] bg-slate-950/20 border-l border-b border-outline-variant/30 rounded-bl relative pt-4 pb-1">
+              {/* Dynamic Chart columns */}
+              {telemetry.slice(-16).map((pt, idx) => {
+                const heightPct = Math.min((pt.torque_ftlbs / 45000) * 100, 100);
+                const isAnomaly = pt.is_anomaly;
+                const isWarning = pt.forecast_risk > 30;
                 
-                {telemetry.map((pt, i) => (
-                  <div key={i} className="flex-1 mx-0.5 h-full relative flex flex-col justify-end group">
+                return (
+                  <div key={idx} className="flex-1 flex flex-col justify-end h-full group relative">
                     <div 
-                      className={`w-full transition-all duration-300 rounded-t-sm ${pt.torque_ftlbs > 18000 ? 'bg-gradient-to-t from-red-600 to-amber-500 shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-pulse' : pt.forecast_risk > 30 ? 'bg-gradient-to-t from-amber-500 to-orange-400 shadow-[0_0_8px_rgba(245,158,11,0.3)]' : 'bg-gradient-to-t from-emerald-600 to-teal-400'}`}
-                      style={{ height: `${Math.min((pt.torque_ftlbs / 45000) * 100, 100)}%` }}
+                      className={`w-full rounded-t border-t transition-all duration-300 crt-flicker ${
+                        isAnomaly 
+                          ? 'bg-gradient-to-t from-red-600/10 to-red-500/50 border-red-400 shadow-[0_0_8px_rgba(239,68,68,0.4)]' 
+                          : isWarning 
+                            ? 'bg-gradient-to-t from-amber-500/10 to-amber-500/50 border-amber-400' 
+                            : 'bg-gradient-to-t from-primary/10 to-primary/40 border-primary/50'
+                      }`}
+                      style={{ height: `${heightPct}%` }}
                     ></div>
-                    {/* Tooltip on Hover */}
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 bg-slate-950 border border-slate-800 px-2.5 py-1 rounded text-[9px] font-mono font-bold text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-xl whitespace-nowrap">
+                    {/* Tooltip on hover */}
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-surface-container border border-outline rounded text-[9px] font-mono font-bold text-slate-100 opacity-0 group-hover:opacity-100 transition-opacity z-30 pointer-events-none whitespace-nowrap shadow-lg">
                       {pt.torque_ftlbs.toFixed(0)} ft-lbs
                     </div>
                   </div>
-                ))}
-              </div>
-              
-              {/* X-Axis labels */}
-              <div className="flex justify-between items-center text-[9px] text-slate-500 font-mono font-bold pt-2 px-1 select-none">
-                <span>T-30 cycles</span>
-                <span>T-15 cycles</span>
-                <span>Live Feed</span>
-              </div>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        {/* WITSML XML Stream Viewer */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col">
-          <div className="flex justify-between items-center mb-3">
-            <div className="flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-sm bg-indigo-500 animate-pulse"></span>
-              <h3 className="text-sm font-bold text-slate-100 uppercase tracking-wider font-mono">WITSML XML Telemetry Stream</h3>
-            </div>
-            <span className="text-[9px] bg-indigo-500/15 border border-indigo-500/20 text-indigo-400 font-mono px-2 py-0.5 rounded font-bold uppercase tracking-widest">WITSML v1.4.1.1 SOAP Standard</span>
-          </div>
-          <div className="bg-slate-950/80 border border-slate-850 rounded-lg p-4 font-mono text-[10px] text-indigo-300 overflow-x-auto max-h-[160px] shadow-inner select-all whitespace-pre leading-relaxed">
-            {currentPt?.witsml_xml || "Initializing WITSML SOAP Stream XML Parser..."}
-          </div>
-        </div>
       </div>
 
-      <div className="col-span-1 flex flex-col h-full bg-slate-900 border border-slate-800 rounded-xl shadow-lg p-6">
-        <h3 className="text-xl font-bold text-slate-100 mb-4 border-b border-slate-800 pb-2 flex items-center justify-between">
-          <span>AI Co-Driller</span>
-          <span className={`w-2 h-2 rounded-full ${risk > 70 ? 'bg-red-500 animate-ping' : risk > 30 ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500 animate-ping'}`}></span>
-        </h3>
-
-        {/* Geological Lithology HUD Card */}
-        <div className="mb-4 p-4 bg-slate-950/60 border border-slate-800/80 rounded-2xl relative overflow-hidden flex items-center justify-between shadow-inner">
-          <div className="absolute top-0 right-0 w-16 h-16 bg-teal-500/5 blur-[20px] rounded-full"></div>
-          <div>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">Current Lithology</p>
-            <h4 className="text-sm font-bold text-slate-200 mt-1 flex items-center space-x-1.5 font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.5)] animate-pulse"></span>
-              <span>{currentPt?.formation_type || "Clay & Soil"}</span>
-            </h4>
+      {/* AI Recommendation Panel and Feedback calibrator */}
+      <div className="col-span-1 flex flex-col space-y-6">
+        
+        {/* Real-time recommendations */}
+        <div className="glass-panel p-6 rounded-xl flex-1 flex flex-col">
+          <div className="flex items-center gap-2 mb-4 border-b border-outline-variant/20 pb-3">
+            <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>smart_toy</span>
+            <h3 className="font-label-caps text-label-caps text-primary uppercase tracking-widest">AI Decision Engine</h3>
           </div>
-          <div className="text-right">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">Hardness Index</p>
-            <p className="text-xs font-mono font-bold text-teal-400 mt-1">
-              {(() => {
-                const name = currentPt?.formation_type || "Clay & Soil";
-                if (name.includes("Granite") || name.includes("Diorite")) return "9.5 / 10";
-                if (name.includes("Limestone") || name.includes("Tuff")) return "7.2 / 10";
-                if (name.includes("Shale") || name.includes("Chalk")) return "4.5 / 10";
-                return "1.5 / 10";
-              })()}
-            </p>
-          </div>
-        </div>
-
-        {/* Live Prognostics Gauge */}
-        <div className="flex flex-col items-center justify-center py-6 mb-6 bg-slate-950/40 rounded-2xl border border-slate-800/60 p-4 relative overflow-hidden">
-          {/* Subtle background glow */}
-          <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 blur-[40px] rounded-full opacity-10 transition-all duration-500 ${risk > 70 ? 'bg-red-500' : risk > 30 ? 'bg-amber-500' : 'bg-emerald-500'}`}></div>
-
-          <div className="relative w-36 h-36 flex items-center justify-center">
-            {/* SVG circular track and gauge indicator */}
-            <svg className="w-full h-full transform -rotate-90">
-              <circle cx="72" cy="72" r="60" stroke="#1e293b" strokeWidth="8" fill="none" className="translate-x-[-1px] translate-y-[-1px]" />
-              <circle 
-                cx="72" 
-                cy="72" 
-                r="60" 
-                stroke={risk > 70 ? "#ef4444" : risk > 30 ? "#f59e0b" : "#10b981"} 
-                strokeWidth="8" 
-                fill="none" 
-                strokeDasharray={`${2 * Math.PI * 60}`}
-                strokeDashoffset={`${2 * Math.PI * 60 * (1 - risk / 100)}`}
-                className="transition-all duration-500 ease-out translate-x-[-1px] translate-y-[-1px]"
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute flex flex-col items-center text-center">
-              <span className="text-3xl font-mono font-extrabold text-slate-100">{risk.toFixed(0)}%</span>
-              <span className="text-[10px] tracking-widest uppercase text-slate-500 font-semibold mt-0.5">Threat Index</span>
-            </div>
-          </div>
-
-          <p className="text-xs text-slate-400 mt-4 text-center font-bold">
-            {risk > 70 ? "CRITICAL RISK OF DYSFUNCTION" : risk > 30 ? "CAUTION: STRESS BUILD-UP DETECTED" : "NOMINAL OPERATION"}
-          </p>
-        </div>
-
-        {/* Action Panel */}
-        <div className="flex-1 flex flex-col justify-between">
-          {feedbackToast && (
-            <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-[10px] uppercase tracking-wider shadow-[0_0_15px_rgba(245,158,11,0.2)] animate-pulse leading-relaxed">
-              {feedbackToast}
-            </div>
-          )}
 
           {currentPt?.is_anomaly ? (
-            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-100 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
-              <div className="flex items-center space-x-2 text-red-400 font-bold mb-2 uppercase text-sm">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
-                <span>{currentPt.anomaly_type}</span>
-              </div>
-              <p className="text-xs text-slate-300 mb-4 leading-relaxed">{currentPt.recommended_solution}</p>
-              
-              <button className="w-full bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 py-2.5 rounded-xl font-bold shadow-lg text-white text-xs tracking-wider uppercase transition-all mb-3">Execute Emergency Override</button>
-              
-              <div className="border-t border-red-500/15 pt-3">
-                <p className="text-[10px] font-bold text-red-400/80 uppercase tracking-widest font-mono mb-2">Train Omesham's Brain:</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <button 
-                    onClick={() => onFeedbackSubmit('correct')}
-                    className="flex items-center justify-center space-x-1 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-400 font-bold rounded-lg text-[9px] uppercase tracking-wider transition-all"
-                  >
-                    <span>👍 Correct</span>
-                  </button>
-                  <button 
-                    onClick={() => onFeedbackSubmit('false_alarm')}
-                    className="flex items-center justify-center space-x-1 py-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 font-bold rounded-lg text-[9px] uppercase tracking-wider transition-all"
-                  >
-                    <span>👎 False Alarm</span>
-                  </button>
+            <div className="flex-1 flex flex-col justify-between">
+              <div className="bg-red-500/10 p-4 border-l-4 border-red-500 rounded-r relative overflow-hidden mb-4">
+                <div className="absolute top-0 right-0 w-8 h-8 opacity-10">
+                  <span className="material-symbols-outlined text-2xl text-red-500">warning</span>
                 </div>
+                <p className="font-label-caps text-[10px] text-red-400 mb-1.5 uppercase tracking-widest font-bold">DYSFUNCTION TRIGGERED</p>
+                <p className="text-xs text-slate-300 leading-relaxed font-sans font-medium">{currentPt.recommended_solution}</p>
               </div>
-            </div>
-          ) : risk > 30 ? (
-            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-100 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
-              <div className="flex items-center space-x-2 text-amber-400 font-bold mb-2 uppercase text-sm">
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                <span>PREDICTIVE MITIGATION</span>
-              </div>
-              <p className="text-xs text-slate-300 mb-4 leading-relaxed">{currentPt?.proactive_alert || "Warning: Torsional dynamics approaching instability."}</p>
-              
-              <button className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 py-2.5 rounded-xl font-extrabold shadow-lg text-xs tracking-wider uppercase transition-all mb-3">Auto-Throttle Parameters</button>
 
-              <div className="border-t border-amber-500/15 pt-3">
-                <p className="text-[10px] font-bold text-amber-400/80 uppercase tracking-widest font-mono mb-2">Calibrate Warning Margin:</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <button 
-                    onClick={() => onFeedbackSubmit('correct')}
-                    className="flex items-center justify-center space-x-1 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-400 font-bold rounded-lg text-[9px] uppercase tracking-wider transition-all"
-                  >
-                    <span>👍 Correct</span>
-                  </button>
-                  <button 
-                    onClick={() => onFeedbackSubmit('false_alarm')}
-                    className="flex items-center justify-center space-x-1 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-400 font-bold rounded-lg text-[9px] uppercase tracking-wider transition-all"
-                  >
-                    <span>👎 False Alarm</span>
-                  </button>
+              {/* Action Optimization loop */}
+              <div className="border-t border-outline-variant/20 pt-4 mt-auto">
+                <button 
+                  onClick={() => onFeedbackSubmit('correct')}
+                  className="w-full bg-gradient-to-r from-red-600 to-amber-500 hover:from-red-500 hover:to-amber-400 text-slate-950 font-bold py-2.5 rounded-lg text-xs tracking-wider uppercase transition-all shadow-lg flex items-center justify-center gap-2 mb-3"
+                >
+                  <span className="material-symbols-outlined text-[16px]">bolt</span>
+                  <span>EXECUTE DAMPING AUTOPILOT</span>
+                </button>
+
+                <div className="bg-surface-container-low/40 p-3 rounded-lg border border-outline-variant/10">
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest font-mono mb-2">Audit AI System Accuracy:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button 
+                      onClick={() => onFeedbackSubmit('correct')}
+                      className="flex items-center justify-center gap-1 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-bold rounded text-[9px] uppercase tracking-wider transition-all"
+                    >
+                      <span className="material-symbols-outlined text-xs">thumb_up</span>
+                      <span>Correct</span>
+                    </button>
+                    <button 
+                      onClick={() => onFeedbackSubmit('false_alarm')}
+                      className="flex items-center justify-center gap-1 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 font-bold rounded text-[9px] uppercase tracking-wider transition-all"
+                    >
+                      <span className="material-symbols-outlined text-xs">thumb_down</span>
+                      <span>False Alarm</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center py-8 opacity-60 animate-fade-in">
-              <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 mb-3">
-                <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg>
+            <div className="flex-1 flex flex-col justify-between">
+              <div className="space-y-4">
+                <div className="bg-primary/5 p-4 border-l-4 border-primary rounded-r">
+                  <p className="font-label-caps text-[10px] text-primary mb-1.5 uppercase tracking-widest font-bold">STATE CONTROL: PASSIVE MONITORING</p>
+                  <p className="text-xs text-slate-300 leading-relaxed">Drillstring torsional envelopes and lateral vibrations are currently within normal baseline guidelines.</p>
+                </div>
+                
+                <div className="bg-surface-container-high/20 p-4 border-l-4 border-slate-500/50 rounded-r">
+                  <p className="font-label-caps text-[10px] text-slate-400 mb-1.5 uppercase tracking-widest font-bold">HYDRAULIC STATUS</p>
+                  <p className="text-xs text-slate-300 leading-relaxed">Standpipe pressure is stable at {currentPt?.spp_psi !== undefined ? currentPt.spp_psi.toFixed(0) : "2450"} psi. No flow anomalies detected.</p>
+                </div>
               </div>
-              <h4 className="text-sm font-bold text-slate-200 mb-1">Dynamics Stable</h4>
-              <p className="text-xs text-slate-500 max-w-[200px]">Drillstring operating perfectly within safe stress parameters.</p>
+
+              <div className="flex flex-col items-center justify-center text-center py-6 opacity-60">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 mb-2">
+                  <span className="material-symbols-outlined text-[18px] text-emerald-400 font-black">verified</span>
+                </div>
+                <h4 className="text-xs font-bold text-slate-200">No Action Required</h4>
+                <p className="text-[10px] text-slate-500 max-w-[180px] mt-0.5">Operating envelope remains balanced.</p>
+              </div>
+            </div>
+          )}
+
+          {/* Feedback Toast */}
+          {feedbackToast && (
+            <div className="mt-4 p-3 bg-teal-950/80 border border-teal-500/30 text-teal-400 rounded text-[10px] font-mono leading-normal shadow-[0_0_15px_rgba(45,212,191,0.25)] animate-fade-in text-center">
+              {feedbackToast}
             </div>
           )}
         </div>
+
       </div>
+
     </div>
   );
 };
 
+// =====================================================================
+//                       COMPONENT: TRAJECTORY OPTIMIZATION
+// =====================================================================
 const TrajectoryOptimization = ({ currentDepth }: { currentDepth: number }) => {
+  useEffect(() => {
+    // Generate soft, continuous structural radar sonics on component load
+    playRadarBeep(1050, 0.25, "sine");
+    const interval = setInterval(() => {
+      playRadarBeep(1050, 0.15, "sine");
+    }, 4500);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="flex flex-col h-full space-y-6">
+    <div className="flex flex-col h-full space-y-6 pb-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-        <div className="col-span-1 lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-lg min-h-[400px] flex flex-col">
-          <h3 className="text-lg font-bold text-slate-100 mb-4">Wellbore Trajectory (TVD vs Departure)</h3>
-          
+        
+        {/* Path Map */}
+        <div className="col-span-1 lg:col-span-2 glass-panel p-6 rounded-xl min-h-[420px] flex flex-col">
+          <h3 className="font-label-caps text-label-caps text-primary tracking-widest flex items-center gap-2 mb-6">
+            <span className="material-symbols-outlined text-[16px]">explore</span>
+            WELLBORE TRAJECTORY (TVD VS DEPARTURE)
+          </h3>
+
           <div className="flex-1 flex space-x-4">
-            {/* TVD Vertical Axis Scale */}
-            <div className="flex flex-col justify-between text-[9px] text-slate-500 font-mono font-bold py-4 border-r border-slate-850/60 pr-2 select-none h-full min-h-[280px]">
+            {/* TVD vertical axis scale */}
+            <div className="flex flex-col justify-between text-[9px] text-slate-500 font-mono font-bold py-4 border-r border-outline-variant/25 pr-3 select-none h-full min-h-[280px]">
               <span>0 ft (Surface)</span>
               <span>4,000 ft</span>
               <span>8,000 ft</span>
               <span>12,500 ft (TD)</span>
             </div>
-            
+
             <div className="flex-1 flex flex-col h-full">
-              {/* SVG Area */}
-              <div className="flex-1 bg-slate-950 rounded-lg border border-slate-800 relative flex items-center justify-center p-8 h-[280px]">
-                {/* Horizontal reference lines */}
-                <div className="absolute inset-x-0 top-1/3 border-t border-slate-850/5 pointer-events-none"></div>
-                <div className="absolute inset-x-0 top-2/3 border-t border-slate-850/5 pointer-events-none"></div>
-                
+              <div className="flex-1 bg-slate-950/40 rounded-lg border border-outline-variant/20 relative flex items-center justify-center p-8 h-[280px]">
+                {/* Reference Grid Overlay */}
+                <div className="absolute inset-x-0 top-1/3 border-t border-outline-variant/5 pointer-events-none"></div>
+                <div className="absolute inset-x-0 top-2/3 border-t border-outline-variant/5 pointer-events-none"></div>
+                <div className="absolute inset-y-0 left-1/3 border-l border-outline-variant/5 pointer-events-none"></div>
+                <div className="absolute inset-y-0 left-2/3 border-l border-outline-variant/5 pointer-events-none"></div>
+
                 <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                  <path d="M 10,0 C 10,40 50,60 90,90" fill="none" stroke="rgba(16, 185, 129, 0.4)" strokeWidth="1" strokeDasharray="2,2" />
+                  {/* Ideal Path Curve */}
+                  <path d="M 10,0 C 10,40 50,60 90,90" fill="none" stroke="rgba(192, 198, 222, 0.2)" strokeWidth="1.2" strokeDasharray="3,3" />
+                  
                   {(() => {
                     const depthPct = Math.min(currentDepth / 12500, 1);
                     const y = depthPct * 90;
-                    const actualX = 10 + Math.pow(depthPct, 1.5) * 80 + (currentDepth > 4000 ? Math.sin(currentDepth / 500) * 5 : 0);
+                    const actualX = 10 + Math.pow(depthPct, 1.5) * 80 + (currentDepth > 4000 ? Math.sin(currentDepth / 500) * 4 : 0);
+                    
                     return (
                       <>
-                        <path d={`M 10,0 Q 10,${y/2} ${actualX},${y}`} fill="none" stroke="#f59e0b" strokeWidth="1.5" />
+                        {/* Actual Drilled Path */}
+                        <path d={`M 10,0 Q 10,${y/2} ${actualX},${y}`} fill="none" stroke="#e4bfaa" strokeWidth="2" />
                         
-                        {/* Double Sonar Radar Beep Ring 1 */}
-                        <circle cx={actualX} cy={y} r="2" fill="none" stroke="#f59e0b" strokeWidth="0.4" opacity="0.8">
-                          <animate attributeName="r" values="2;10" dur="1.8s" repeatCount="indefinite" />
-                          <animate attributeName="opacity" values="0.8;0" dur="1.8s" repeatCount="indefinite" />
+                        {/* Interactive pulsing radar rings */}
+                        <circle cx={actualX} cy={y} r="2" fill="none" stroke="#e4bfaa" strokeWidth="0.5" opacity="0.8">
+                          <animate attributeName="r" values="2;12" dur="2s" repeatCount="indefinite" />
+                          <animate attributeName="opacity" values="0.8;0" dur="2s" repeatCount="indefinite" />
                         </circle>
-                        
-                        {/* Double Sonar Radar Beep Ring 2 (Offset phase delay) */}
-                        <circle cx={actualX} cy={y} r="2" fill="none" stroke="#f59e0b" strokeWidth="0.2" opacity="0.5">
-                          <animate attributeName="r" values="2;16" dur="1.8s" begin="0.6s" repeatCount="indefinite" />
-                          <animate attributeName="opacity" values="0.5;0" dur="1.8s" begin="0.6s" repeatCount="indefinite" />
+                        <circle cx={actualX} cy={y} r="2" fill="none" stroke="#c0c6de" strokeWidth="0.3" opacity="0.6">
+                          <animate attributeName="r" values="2;18" dur="2s" begin="0.7s" repeatCount="indefinite" />
+                          <animate attributeName="opacity" values="0.6;0" dur="2s" begin="0.7s" repeatCount="indefinite" />
                         </circle>
-                        
-                        {/* Solid core drillbit center */}
-                        <circle cx={actualX} cy={y} r="2.2" fill="#f59e0b" className="shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
+
+                        {/* Solid drillbit locator node */}
+                        <circle cx={actualX} cy={y} r="2.2" fill="#e4bfaa" className="shadow-[0_0_12px_rgba(228,191,170,0.6)]" />
                       </>
                     );
                   })()}
                 </svg>
               </div>
-              
-              {/* Horizontal Departure Axis Scale */}
+
+              {/* Horizontal scales */}
               <div className="flex justify-between items-center text-[9px] text-slate-500 font-mono font-bold pt-2 px-1 select-none">
                 <span>0 ft (Vertical)</span>
                 <span>2,000 ft Departure</span>
@@ -346,57 +352,79 @@ const TrajectoryOptimization = ({ currentDepth }: { currentDepth: number }) => {
             </div>
           </div>
         </div>
-        <div className="col-span-1 bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-lg">
-          <h3 className="text-lg font-bold text-slate-100 mb-4">RSS Steering Agent</h3>
-          <div className="p-4 bg-teal-900/10 border border-teal-500/20 rounded">
-            <p className="text-teal-400 font-bold mb-2">Target Status: On Path</p>
-            <p className="text-xs text-slate-400">Continuous 3D optimization active. Lateral deviation within 2.5ft tolerance.</p>
+
+        {/* RSS steering panel */}
+        <div className="col-span-1 glass-panel p-6 rounded-xl flex flex-col justify-between">
+          <div>
+            <h3 className="font-label-caps text-label-caps text-primary tracking-widest flex items-center gap-2 mb-4">
+              <span className="material-symbols-outlined text-[16px]">explore</span>
+              STEERING AGENT
+            </h3>
+            
+            <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-lg mb-6">
+              <p className="font-label-caps text-[11px] text-emerald-400 font-bold mb-1">TARGET STATUS: ON PATH</p>
+              <p className="text-xs text-slate-400 leading-normal">Closed-loop geometric trajectory optimizer active. Target deviation remains strictly within the 2.5ft allowance window.</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="border-l-2 border-primary/40 pl-4">
+                <p className="text-[9px] font-mono text-slate-500 font-bold uppercase tracking-wider">Inclination</p>
+                <p className="text-base font-mono text-slate-200 mt-0.5">{(34.2 + Math.sin(currentDepth / 1000) * 5).toFixed(2)}°</p>
+              </div>
+              <div className="border-l-2 border-primary/40 pl-4">
+                <p className="text-[9px] font-mono text-slate-500 font-bold uppercase tracking-wider">Azimuth Angle</p>
+                <p className="text-base font-mono text-slate-200 mt-0.5">342° <span className="text-[10px] text-slate-500">N</span></p>
+              </div>
+              <div className="border-l-2 border-primary/40 pl-4">
+                <p className="text-[9px] font-mono text-slate-500 font-bold uppercase tracking-wider">Build Rate (DLS)</p>
+                <p className="text-base font-mono text-slate-200 mt-0.5">2.4°/100ft</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-surface-container-low/40 p-3 rounded-lg border border-outline-variant/10 text-[9px] text-slate-500 font-mono text-center">
+            LAST SIGNAL UPDATED: JUST NOW
           </div>
         </div>
+
       </div>
     </div>
   );
 };
 
+// =====================================================================
+//                       COMPONENT: BHA CONTROL
+// =====================================================================
 const BHAControl = ({ currentDepth, telemetry = [] }: { currentDepth: number, telemetry?: any[] }) => {
   const currentPt = telemetry.length > 0 ? telemetry[telemetry.length - 1] : null;
 
-  // Calculate dynamic lateral vibration physically based on rotational speed, geology, and dysfunctions
   const calculateVibration = () => {
     if (!currentPt) return 1.8;
-    
-    // Baseline physics fluctuation (between 1.2 and 1.8G)
     const baseVal = 1.2 + (Math.sin(currentDepth / 10) * 0.3) + (Math.cos(currentPt.rpm / 20) * 0.1);
-    
-    // Hard rock resonance (granite basement fracturing causes higher continuous vibrations)
     const geoMultiplier = currentPt.formation_type?.includes("Granite") ? 1.9 : 1.0;
-    
-    // Centripetal acceleration factor at higher RPMs
     const rpmMultiplier = 1.0 + (currentPt.rpm / 150) * 0.4;
-    
     let finalVib = baseVal * geoMultiplier * rpmMultiplier;
     
-    // Spike massively if there is an active stick-slip vibrational dysfunction
     if (currentPt.is_anomaly) {
       if (currentPt.anomaly_type?.includes("Stick-Slip") || currentPt.anomaly_type?.includes("Vibration")) {
-        finalVib += 5.2 + (Math.sin(Date.now() / 200) * 0.9); // Vibrational whip spikes to 6-8G
+        finalVib += 5.2 + (Math.sin(Date.now() / 200) * 0.9);
       } else if (currentPt.anomaly_type?.includes("Washout")) {
-        finalVib += 0.8; // Mild hydraulic flutter
+        finalVib += 0.8;
       }
     }
-    
     return finalVib;
   };
 
   const vibrationG = calculateVibration();
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
-      <div className="col-span-1 bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col items-center">
-        <h3 className="text-sm font-bold text-slate-400 mb-4 uppercase tracking-widest">BHA Schematic</h3>
-        <div className="w-full max-w-[210px] aspect-[1/1.5] relative flex items-center justify-center p-2 bg-slate-950 rounded-lg border border-slate-850">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full pb-8">
+      
+      {/* Schematic Graphic card */}
+      <div className="col-span-1 glass-panel p-6 rounded-xl flex flex-col items-center">
+        <h3 className="font-label-caps text-label-caps text-primary mb-4 uppercase tracking-widest w-full text-center">BHA ASSEMBLY 14A</h3>
+        <div className="w-full max-w-[210px] aspect-[1/1.5] relative flex items-center justify-center p-2 bg-slate-950/30 rounded-xl border border-outline-variant/20">
           <svg className="w-full h-full" viewBox="0 0 170 300" fill="none">
-            {/* Definitions for gorgeous gradient maps */}
             <defs>
               <linearGradient id="metalGlow" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="#1e293b" />
@@ -422,154 +450,136 @@ const BHAControl = ({ currentDepth, telemetry = [] }: { currentDepth: number, te
               </linearGradient>
             </defs>
 
-            {/* Background reference grid lines */}
+            {/* Dotted references */}
             <line x1="15" y1="10" x2="85" y2="10" stroke="#1e293b" strokeWidth="0.5" strokeDasharray="2,2" />
             <line x1="15" y1="290" x2="85" y2="290" stroke="#1e293b" strokeWidth="0.5" strokeDasharray="2,2" />
             <line x1="50" y1="10" x2="50" y2="290" stroke="#1e293b" strokeWidth="0.5" strokeDasharray="4,4" />
 
-            {/* Dotted Component Label Guides & Texts */}
-            {/* Label 1: Drill Pipe */}
+            {/* Labels and lines */}
             <line x1="58" y1="30" x2="92" y2="30" stroke="#475569" strokeWidth="0.75" strokeDasharray="2,2" />
             <circle cx="92" cy="30" r="1" fill="#475569" />
             <text x="98" y="33" fill="#94a3b8" fontSize="6.5" fontWeight="bold" fontFamily="monospace" letterSpacing="0.05em">DRILL COLLAR</text>
 
-            {/* Label 2: MWD Telemetry */}
             <line x1="62" y1="80" x2="92" y2="80" stroke="#2dd4bf" strokeWidth="0.75" strokeDasharray="2,2" />
             <circle cx="92" cy="80" r="1" fill="#2dd4bf" />
             <text x="98" y="83" fill="#2dd4bf" fontSize="6.5" fontWeight="bold" fontFamily="monospace" letterSpacing="0.05em">MWD/LWD COLLAR</text>
 
-            {/* Label 3: Stabilizers */}
             <line x1="72" y1="142" x2="92" y2="142" stroke="#64748b" strokeWidth="0.75" strokeDasharray="2,2" />
             <circle cx="92" cy="142" r="1" fill="#64748b" />
             <text x="98" y="145" fill="#94a3b8" fontSize="6.5" fontWeight="bold" fontFamily="monospace" letterSpacing="0.05em">STABILIZERS</text>
 
-            {/* Label 4: Mud Motor */}
             <line x1="63" y1="210" x2="92" y2="210" stroke="#818cf8" strokeWidth="0.75" strokeDasharray="2,2" />
             <circle cx="92" cy="210" r="1" fill="#818cf8" />
             <text x="98" y="213" fill="#818cf8" fontSize="6.5" fontWeight="bold" fontFamily="monospace" letterSpacing="0.05em">DOWNHOLE MOTOR</text>
 
-            {/* Label 5: PDC Bit */}
             <line x1="70" y1="275" x2="92" y2="275" stroke="#f59e0b" strokeWidth="0.75" strokeDasharray="2,2" />
             <circle cx="92" cy="275" r="1" fill="#f59e0b" />
             <text x="98" y="278" fill="#f59e0b" fontSize="6.5" fontWeight="bold" fontFamily="monospace" letterSpacing="0.05em">PDC DRILL BIT</text>
 
-            {/* 1. Drill Pipe Connection (y: 10 - 50) */}
+            {/* Drill Pipe */}
             <rect x="42" y="10" width="16" height="40" fill="url(#metalGlow)" rx="1" />
             <line x1="42" y1="20" x2="58" y2="20" stroke="#0f172a" strokeWidth="1" />
             <line x1="42" y1="30" x2="58" y2="30" stroke="#0f172a" strokeWidth="1" />
             <line x1="42" y1="40" x2="58" y2="40" stroke="#0f172a" strokeWidth="1" />
 
-            {/* 2. MWD Telemetry Collar (y: 50 - 110) */}
-            <rect x="38" y="50" width="24" height="60" fill="url(#glowingTeal)" rx="1" className="opacity-80 shadow-[0_0_8px_rgba(45,212,191,0.3)]" />
+            {/* MWD */}
+            <rect x="38" y="50" width="24" height="60" fill="url(#glowingTeal)" rx="1" className="opacity-80" />
             <rect x="42" y="55" width="16" height="50" fill="url(#metalGlow)" rx="0.5" />
             <circle cx="50" cy="70" r="2.5" fill="#2dd4bf" className="animate-ping" />
             <circle cx="50" cy="90" r="2.5" fill="#2dd4bf" className="animate-pulse" />
-            
-            {/* Wireless Telemetry mud-pulse waves (Blinks dynamically) */}
             <path d="M 28,65 Q 18,70 28,75" fill="none" stroke="#2dd4bf" strokeWidth="1.5" className="animate-pulse" />
             <path d="M 72,65 Q 82,70 72,75" fill="none" stroke="#2dd4bf" strokeWidth="1.5" className="animate-pulse" />
-            <path d="M 24,60 Q 12,70 24,80" fill="none" stroke="#0d9488" strokeWidth="1" className="animate-ping" />
-            <path d="M 76,60 Q 88,70 76,80" fill="none" stroke="#0d9488" strokeWidth="1" className="animate-ping" />
 
-            {/* 3. Drill Collars with Stabilizer Blades (y: 110 - 180) */}
+            {/* Collar and stabilizers */}
             <rect x="36" y="110" width="28" height="70" fill="url(#metalGlow)" rx="1" />
-            
-            {/* Stabilizer Blades (Flashes warnings in red if vibration is excessive!) */}
-            <rect x="28" y="125" width="8" height="35" rx="1" fill={vibrationG > 4.5 ? "#ef4444" : "url(#stabilizerBlade)"} className={`transition-all duration-300 ${vibrationG > 4.5 ? 'animate-pulse shadow-[0_0_10px_#ef4444]' : ''}`} />
-            <rect x="64" y="125" width="8" height="35" rx="1" fill={vibrationG > 4.5 ? "#ef4444" : "url(#stabilizerBlade)"} className={`transition-all duration-300 ${vibrationG > 4.5 ? 'animate-pulse shadow-[0_0_10px_#ef4444]' : ''}`} />
+            <rect x="28" y="125" width="8" height="35" rx="1" fill={vibrationG > 4.5 ? "#ef4444" : "url(#stabilizerBlade)"} className={vibrationG > 4.5 ? 'animate-pulse' : ''} />
+            <rect x="64" y="125" width="8" height="35" rx="1" fill={vibrationG > 4.5 ? "#ef4444" : "url(#stabilizerBlade)"} className={vibrationG > 4.5 ? 'animate-pulse' : ''} />
             <rect x="47" y="125" width="6" height="35" rx="1" fill="url(#stabilizerBlade)" />
-            
-            {/* Helical spiral groove cuts on collar */}
             <path d="M 36,115 L 64,130" stroke="#0f172a" strokeWidth="1.5" />
             <path d="M 36,135 L 64,150" stroke="#0f172a" strokeWidth="1.5" />
             <path d="M 36,155 L 64,170" stroke="#0f172a" strokeWidth="1.5" />
 
-            {/* 4. Directional Mud Motor - Bent Sub (y: 180 - 240) */}
-            {/* If in Sliding mode (Directional) it glows, showing active steering bend orientation */}
+            {/* Mud Motor Bent Sub */}
             {(() => {
               const isSliding = currentPt?.bha_state?.includes("Sliding");
               return (
                 <g>
-                  {/* Subtle curved bend assembly */}
-                  <path 
-                    d="M 36,180 L 33,240 L 61,240 L 64,180 Z" 
-                    fill={isSliding ? "url(#slideGlow)" : "url(#metalGlow)"} 
-                    className="transition-all duration-500" 
-                  />
-                  {/* Internal power rotor spiral axis indicator */}
-                  <path 
-                    d="M 48,185 Q 42,210 46,235" 
-                    fill="none" 
-                    stroke={isSliding ? "#818cf8" : "#1e293b"} 
-                    strokeWidth="2" 
-                    className={isSliding ? "animate-pulse" : ""} 
-                  />
-                  {isSliding && (
-                    <text x="50" y="215" fill="#e0e7ff" fontSize="7" fontWeight="bold" fontFamily="monospace" textAnchor="middle" className="animate-pulse tracking-wide">SLIDE ACTIVE</text>
-                  )}
+                  <path d="M 36,180 L 33,240 L 61,240 L 64,180 Z" fill={isSliding ? "url(#slideGlow)" : "url(#metalGlow)"} className="transition-all duration-500" />
+                  <path d="M 48,185 Q 42,210 46,235" fill="none" stroke={isSliding ? "#818cf8" : "#1e293b"} strokeWidth="2" className={isSliding ? "animate-pulse" : ""} />
                 </g>
               );
             })()}
 
-            {/* 5. Rotary PDC Bit Drive Shank & Ring (y: 240 - 260) */}
+            {/* Bit drive */}
             <rect x="40" y="240" width="20" height="20" fill="url(#metalGlow)" />
             <circle cx="50" cy="250" r="4" fill="#0f172a" />
 
-            {/* 6. Tungsten-Carbide PDC Drill Bit (y: 260 - 290) */}
-            {/* This whole block rotates around (50, 275) if rotating state is active */}
+            {/* Drill bit rotating assembly */}
             {(() => {
-              const isRotating = currentPt?.bha_state?.includes("Rotating") || (!currentPt?.bha_state && activeTab === 'Rig Telemetry');
+              const isRotating = currentPt?.bha_state?.includes("Rotating") || (!currentPt?.bha_state && currentPt?.rpm > 0);
               return (
-                <g 
-                  className={isRotating ? "animate-[spin_2.5s_linear_infinite]" : ""} 
-                  style={{ transformOrigin: "50px 275px" }}
-                >
-                  {/* Bit Body Matrix (Tapered crown) */}
+                <g className={isRotating ? "animate-[spin_2.5s_linear_infinite]" : ""} style={{ transformOrigin: "50px 275px" }}>
                   <path d="M 30,260 L 70,260 L 66,285 L 58,290 L 42,290 L 34,285 Z" fill="#b45309" stroke="#78350f" strokeWidth="1" />
-                  
-                  {/* Cutter blades & nozzles details */}
                   <rect x="32" y="263" width="6" height="15" rx="0.5" fill="#f59e0b" />
                   <rect x="62" y="263" width="6" height="15" rx="0.5" fill="#f59e0b" />
                   <rect x="47" y="263" width="6" height="24" rx="0.5" fill="#d97706" />
-                  
-                  {/* Individual carbide cutting teeth nodes */}
                   <circle cx="35" cy="281" r="2.5" fill="#475569" stroke="#1e293b" strokeWidth="0.5" />
                   <circle cx="65" cy="281" r="2.5" fill="#475569" stroke="#1e293b" strokeWidth="0.5" />
-                  
                   <circle cx="44" cy="288" r="2.5" fill="#1e293b" />
                   <circle cx="56" cy="288" r="2.5" fill="#1e293b" />
-                  
-                  {/* Fluid discharge jets (cutting paths) */}
-                  <path d="M 38,265 L 38,280" stroke="#38bdf8" strokeWidth="1" opacity="0.8" strokeDasharray="2,1" />
-                  <path d="M 62,265 L 62,280" stroke="#38bdf8" strokeWidth="1" opacity="0.8" strokeDasharray="2,1" />
                 </g>
               );
             })()}
           </svg>
         </div>
       </div>
-      <div className="col-span-1 lg:col-span-3 bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-lg">
-        <h3 className="text-lg font-bold text-slate-100 mb-4">Tool Health Diagnostics</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-           <div className="p-4 bg-slate-950 border border-slate-800 rounded">
-              <p className="text-xs text-slate-500 mb-1">MWD Internal Temp</p>
-              <p className="text-2xl font-mono text-slate-200">{(80 + (currentDepth / 80)).toFixed(1)} °C</p>
-           </div>
-           <div className="p-4 bg-slate-950 border border-slate-800 rounded relative overflow-hidden">
+
+      {/* Health metrics and charts */}
+      <div className="col-span-1 lg:col-span-3 glass-panel p-6 rounded-xl flex flex-col justify-between">
+        <div>
+          <h3 className="font-label-caps text-label-caps text-primary tracking-widest mb-6">BHA TELEMETRY HEALTH</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 bg-slate-950/40 border border-outline-variant/15 rounded-lg">
+              <p className="text-[10px] text-slate-500 font-mono font-bold tracking-wider uppercase mb-1">MWD Internal Temp</p>
+              <p className="text-xl font-mono text-slate-200">{(78 + (currentDepth / 90)).toFixed(1)} <span className="text-xs text-slate-500">°C</span></p>
+            </div>
+            
+            <div className="p-4 bg-slate-950/40 border border-outline-variant/15 rounded-lg relative overflow-hidden">
               {vibrationG > 4.5 && (
                 <div className="absolute top-0 left-0 w-full h-0.5 bg-red-500 animate-pulse"></div>
               )}
-              <p className="text-xs text-slate-500 mb-1">Lateral Vibration</p>
-              <p className={`text-2xl font-mono font-bold transition-all ${vibrationG > 4.5 ? 'text-red-400 animate-pulse' : 'text-slate-200'}`}>
+              <p className="text-[10px] text-slate-500 font-mono font-bold tracking-wider uppercase mb-1">Lateral Vibration</p>
+              <p className={`text-xl font-mono font-bold ${vibrationG > 4.5 ? 'text-red-400 animate-pulse' : 'text-slate-200'}`}>
                 {vibrationG.toFixed(2)} <span className="text-xs text-slate-500">G</span>
               </p>
-           </div>
+            </div>
+
+            <div className="p-4 bg-slate-950/40 border border-outline-variant/15 rounded-lg">
+              <p className="text-[10px] text-slate-500 font-mono font-bold tracking-wider uppercase mb-1">Azimuth Toolface</p>
+              <p className="text-xl font-mono text-slate-200">{(currentPt?.toolface_deg || 14).toFixed(1)}° <span className="text-xs text-slate-500">DEG</span></p>
+            </div>
+
+            <div className="p-4 bg-slate-950/40 border border-outline-variant/15 rounded-lg">
+              <p className="text-[10px] text-slate-500 font-mono font-bold tracking-wider uppercase mb-1">Bit Operating hours</p>
+              <p className="text-xl font-mono text-slate-200">14.5 <span className="text-xs text-slate-500">hrs</span></p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 bg-primary/5 rounded-lg border border-primary/10 mt-6 flex justify-between items-center text-xs text-slate-400">
+          <span>Continuous diagnostic frequency: 10 Hz</span>
+          <span className="font-mono text-[10px] text-primary">STATUS: HEALTHY</span>
         </div>
       </div>
+
     </div>
   );
 };
 
+// =====================================================================
+//                       CORE SCREEN VIEWPORT
+// =====================================================================
 export default function Dashboard() {
   const [telemetry, setTelemetry] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('Rig Telemetry');
@@ -579,7 +589,10 @@ export default function Dashboard() {
   const [alertLogs, setAlertLogs] = useState<any[]>([]);
   const [chaosMode, setChaosMode] = useState(false);
   const [dataSource, setDataSource] = useState('simulated');
-  const [location, setLocation] = useState('permian_basin');
+  const [location, setLocation] = useState('utah_forge');
+  const [handoverNotes, setHandoverNotes] = useState('');
+  const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
+  
   const depthRef = useRef(12450.0);
 
   // Micro-Frontend SSO Handshake Listener
@@ -599,33 +612,16 @@ export default function Dashboard() {
       };
       
       window.addEventListener('message', handleMessage);
-      window.parent.postMessage({ type: 'REQUEST_SSO_SESSION' }, '*');
+      window.parent.postMessage({ type: 'SSO_SESSION_REQUEST' }, '*');
       
       return () => window.removeEventListener('message', handleMessage);
     }
   }, []);
 
-  // Robust Tab Switching via Hash
+  // SSE Real-Time Stream Receiver
   useEffect(() => {
-    const handleHash = () => {
-      const hash = window.location.hash.replace('#', '');
-      if (hash === 'trajectory') setActiveTab('Trajectory Optimization');
-      else if (hash === 'bha') setActiveTab('BHA Control');
-      else setActiveTab('Rig Telemetry');
-      console.log('Tab switched to:', hash || 'rig');
-    };
-    window.addEventListener('hashchange', handleHash);
-    if (window.location.hash) handleHash();
-    return () => window.removeEventListener('hashchange', handleHash);
-  }, []);
-
-  // Sub-Second SSE Telemetry Stream connection
-  useEffect(() => {
-    console.log(`Omesham: Connecting to SSE telemetry stream... Source: ${dataSource}, Geology: ${location}, Chaos: ${chaosMode}`);
+    console.log(`Omesham: Tuning stream receiver to ${dataSource} | ${location} | Chaos: ${chaosMode}`);
     
-    // Reset buffer when swapping data feeds to avoid mixing simulation with real FORGE data
-    setTelemetry([]);
-
     const endpoint = dataSource === 'field'
       ? `http://127.0.0.1:8006/api/field/drilling_stream?location=${location}${chaosMode ? "&chaos=true" : ""}`
       : `http://127.0.0.1:8006/api/drilling/telemetry_stream?location=${location}${chaosMode ? "&chaos=true" : ""}`;
@@ -637,7 +633,7 @@ export default function Dashboard() {
         const pt = JSON.parse(event.data);
         const formattedTimestamp = new Date(pt.timestamp).toLocaleTimeString();
         
-        // Handle physical real-world depths from the geothermal well logs
+        // Handle physical depths
         if (pt.depth_ft !== undefined) {
           depthRef.current = pt.depth_ft;
           setCurrentDepth(pt.depth_ft);
@@ -649,16 +645,16 @@ export default function Dashboard() {
           }
         }
         
-        // Push to rolling buffer
+        // Rolling buffer
         setTelemetry(prev => {
           const updated = [...prev, { ...pt, timestamp: formattedTimestamp }];
-          if (updated.length > 30) {
-            return updated.slice(updated.length - 30);
+          if (updated.length > 25) {
+            return updated.slice(updated.length - 25);
           }
           return updated;
         });
 
-        // Post message to parent to power the main executive NOC
+        // Sync with PetroOne NOC shell
         if (typeof window !== 'undefined') {
           window.parent.postMessage({
             type: 'OMESHAM_TELEMETRY_UPDATE',
@@ -669,14 +665,13 @@ export default function Dashboard() {
           }, '*');
         }
 
-        // Capture predictive warning alerts and anomalies dynamically for logging
+        // Anomaly warnings capture
         if (pt.is_anomaly || pt.forecast_risk > 30) {
           const alertType = pt.is_anomaly ? pt.anomaly_type : "Predictive Alert";
           const alertMsg = pt.is_anomaly ? pt.recommended_solution : pt.proactive_alert;
           
           setAlertLogs(prev => {
             const lastLog = prev[prev.length - 1];
-            // Deduplicate alerts inside an 8 second window
             if (!lastLog || lastLog.message !== alertMsg || (Date.now() - lastLog.rawTime > 8000)) {
               return [...prev, {
                 timestamp: formattedTimestamp,
@@ -695,16 +690,15 @@ export default function Dashboard() {
     };
 
     eventSource.onerror = (err) => {
-      console.error("Omesham SSE connection dropped, retrying...", err);
+      console.error("Omesham SSE dropped, retrying...", err);
     };
 
     return () => {
-      console.log("Omesham: Uncoupling SSE telemetry listener.");
       eventSource.close();
     };
   }, [chaosMode, dataSource, location]);
 
-  // Sync Depth incrementor (only active during synthetic simulation)
+  // Synthetic depth incremental drift
   useEffect(() => {
     if (dataSource === 'field') return;
     
@@ -721,96 +715,162 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [dataSource]);
 
-  // Helper selectors for the operations report
-  const getAverage = (key: string) => {
-    if (telemetry.length === 0) return 0;
-    return telemetry.reduce((acc, val) => acc + val[key], 0) / telemetry.length;
+  // Feedback Trigger
+  const onFeedbackSubmit = async (correction: 'correct' | 'false_alarm') => {
+    const currentPt = telemetry.length > 0 ? telemetry[telemetry.length - 1] : null;
+    if (!currentPt) return;
+    try {
+      const res = await fetch("http://127.0.0.1:8006/api/drilling/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          torque_ftlbs: currentPt.torque_ftlbs,
+          rpm: currentPt.rpm,
+          wob_klbs: currentPt.wob_klbs,
+          spp_psi: currentPt.spp_psi,
+          rop_fph: currentPt.rop_fph,
+          formation_type: currentPt.formation_type,
+          original_anomaly: currentPt.anomaly_type,
+          operator_correction: correction
+        })
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        setFeedbackToast(`Autopilot Calibrated! Adapted to: ${correction === 'false_alarm' ? 'Ignore Vibration' : 'Enforce Safety Boundary'}`);
+        setTimeout(() => setFeedbackToast(null), 6000);
+        playRadarBeep(880, 0.1, "sine");
+      }
+    } catch (err) {
+      console.error("Feedback submit error:", err);
+    }
   };
 
-  const getMin = (key: string) => {
-    if (telemetry.length === 0) return 0;
-    return Math.min(...telemetry.map(pt => pt[key]));
-  };
+  const currentPt = telemetry.length > 0 ? telemetry[telemetry.length - 1] : null;
+  const threatIndex = currentPt?.forecast_risk || 15;
 
-  const getMax = (key: string) => {
-    if (telemetry.length === 0) return 0;
-    return Math.max(...telemetry.map(pt => pt[key]));
-  };
-
+  // Render authentic authentication synchronization screen
   if (!isAuthenticated) {
     return (
-      <div className="flex flex-col h-screen w-full bg-slate-950 items-center justify-center text-slate-400 font-mono text-xs tracking-widest">
-         <div className="w-10 h-10 border-2 border-slate-800 border-t-amber-500 rounded-full animate-spin mb-4"></div>
-         SYNCHRONIZING SECURE NODE IDENTITY...
+      <div className="flex flex-col h-screen w-full bg-[#020617] items-center justify-center text-slate-400 font-mono text-xs tracking-widest relative">
+        <div className="fixed inset-0 grid-bg z-0 pointer-events-none"></div>
+        <div className="fixed inset-0 scanline z-10 pointer-events-none"></div>
+        <div className="relative z-20 flex flex-col items-center">
+          <div className="w-12 h-12 border-2 border-slate-800 border-t-amber-500 rounded-full animate-spin mb-4"></div>
+          <span>SYNCHRONIZING SECURE NODE IDENTITY...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen w-full bg-slate-950 text-slate-300 font-sans overflow-hidden relative">
-      <style dangerouslySetInnerHTML={{__html: `
-        @media print {
-          body {
-            background: white !important;
-            color: black !important;
-          }
-          aside, header, main, .no-print {
-            display: none !important;
-          }
-          #printable-report {
-            display: block !important;
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100% !important;
-            height: auto !important;
-            background: white !important;
-            color: black !important;
-            z-index: 999999 !important;
-            padding: 30px !important;
-          }
-        }
-      `}} />
+    <div className="flex h-screen w-full bg-[#020617] text-slate-300 font-sans overflow-hidden relative">
+      
+      {/* Background Grid & CRT scanlines */}
+      <div className="fixed inset-0 grid-bg z-0 pointer-events-none"></div>
+      <div className="fixed inset-0 scanline z-10 pointer-events-none"></div>
 
-      {/* Sidebar - HIDDEN during print */}
-      <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col relative z-[100] no-print">
-        <div className="p-6 border-b border-slate-800">
-          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-400">OMESHAM AI</h1>
-          <p className="text-[10px] tracking-widest uppercase text-slate-500 mt-1">Drilling Command Center</p>
+      {/* 1. TOP HEADER NAVIGATION BAR */}
+      <header className="fixed top-0 left-0 w-full h-16 z-50 flex justify-between items-center px-6 bg-surface/60 backdrop-blur-xl border-b border-outline-variant/30 shadow-[0_0_20px_rgba(192,198,222,0.1)] no-print">
+        <div className="flex items-center gap-6">
+          <span className="text-xl font-black tracking-tighter text-primary">OMESHAM AI</span>
+          
+          {/* Active dropdown selectors for stream targets */}
+          <div className="hidden md:flex gap-4">
+            
+            {/* Simulated selector */}
+            <div className="flex items-center space-x-2 bg-slate-900/50 border border-outline-variant/20 rounded-xl px-2.5 py-1 text-xs">
+              <span className="text-[10px] text-slate-500 font-mono font-bold uppercase">FEED:</span>
+              <select 
+                value={dataSource}
+                onChange={(e) => {
+                  setDataSource(e.target.value);
+                  playRadarBeep(920, 0.08, "sine");
+                }}
+                className="bg-transparent text-slate-300 font-mono font-bold text-[11px] focus:outline-none border-none cursor-pointer"
+              >
+                <option value="simulated" className="bg-[#0e0e0f] text-slate-300">SIMULATED</option>
+                <option value="field" className="bg-[#0e0e0f] text-slate-300">FIELD RAW</option>
+              </select>
+            </div>
+
+            {/* Geological selector */}
+            <div className="flex items-center space-x-2 bg-slate-900/50 border border-outline-variant/20 rounded-xl px-2.5 py-1 text-xs">
+              <span className="text-[10px] text-slate-500 font-mono font-bold uppercase">REGION:</span>
+              <select 
+                value={location}
+                onChange={(e) => {
+                  setLocation(e.target.value);
+                  playRadarBeep(920, 0.08, "sine");
+                }}
+                className="bg-transparent text-slate-300 font-mono font-bold text-[11px] focus:outline-none border-none cursor-pointer"
+              >
+                <option value="utah_forge" className="bg-[#0e0e0f] text-slate-300">UTAH FORGE</option>
+                <option value="permian_basin" className="bg-[#0e0e0f] text-slate-300">PERMIAN BASIN</option>
+                <option value="volve_field" className="bg-[#0e0e0f] text-slate-300">VOLVE FIELD</option>
+                <option value="gom_deepwater" className="bg-[#0e0e0f] text-slate-300">GULF OF MEXICO</option>
+                <option value="arabian_basin" className="bg-[#0e0e0f] text-slate-300">MIDDLE EAST</option>
+              </select>
+            </div>
+
+          </div>
         </div>
-        <nav className="flex-1 p-4 space-y-4" style={{ position: 'relative', zIndex: 1001 }}>
-          {[
-            { id: '', label: 'Rig Telemetry' },
-            { id: 'trajectory', label: 'Trajectory Optimization' },
-            { id: 'bha', label: 'BHA Control' }
-          ].map(tab => (
-            <button 
-              key={tab.label}
-              id={`tab-${tab.id || 'rig'}`}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log("Omesham: Forced Switch to", tab.label);
-                setActiveTab(tab.label);
-                window.location.hash = tab.id || 'rig';
+
+        {/* Header Right toggles */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center space-x-2 bg-slate-900/50 border border-outline-variant/20 rounded-xl px-3 py-1.5 h-9">
+            <span className="text-[9px] font-bold text-slate-500 tracking-wider uppercase font-mono">Stress Mode</span>
+            <button
+              onClick={() => {
+                setChaosMode(prev => !prev);
+                playRadarBeep(chaosMode ? 600 : 1300, 0.15, "triangle");
               }}
-              style={{ 
-                cursor: 'pointer', 
-                pointerEvents: 'auto', 
-                display: 'block',
-                width: '100%',
-                position: 'relative',
-                zIndex: 2000
-              }}
-              className={`text-left px-4 py-4 rounded-xl transition-all font-bold ${activeTab === tab.label ? 'bg-amber-500 text-slate-900 shadow-[0_0_20px_rgba(245,158,11,0.4)]' : 'text-slate-400 hover:bg-slate-800 border border-slate-800'}`}
+              className={`w-8 h-4.5 rounded-full transition-all duration-300 relative flex items-center p-0.5 ${chaosMode ? 'bg-gradient-to-r from-red-600 to-amber-500 shadow-[0_0_12px_rgba(239,68,68,0.45)]' : 'bg-slate-800'}`}
             >
-              {tab.label}
+              <div className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transform transition-all duration-300 ${chaosMode ? 'translate-x-3.5' : 'translate-x-0'}`}></div>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 text-on-surface-variant">
+            <span className="material-symbols-outlined cursor-pointer hover:text-primary text-[20px]">settings</span>
+            <span className={`material-symbols-outlined cursor-pointer hover:text-primary text-[20px] ${alertLogs.length > 0 ? 'text-amber-500 animate-pulse' : ''}`}>notifications_active</span>
+          </div>
+        </div>
+      </header>
+
+      {/* 2. SIDEBAR MISSION CONTROL */}
+      <aside className="fixed left-0 top-0 h-full w-64 z-40 flex flex-col pt-20 bg-surface-container/40 backdrop-blur-2xl border-r border-outline-variant/20 shadow-[10px_0_30px_rgba(0,0,0,0.5)] no-print">
+        <div className="px-6 mb-8">
+          <h2 className="font-headline-md text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-400 leading-none">MISSION CONTROL</h2>
+          <p className="font-label-caps text-[9px] text-on-surface-variant opacity-60 mt-1 tracking-widest font-bold">SECTOR 07-B</p>
+        </div>
+
+        {/* Sidebar Nav anchors */}
+        <nav className="flex-1 flex flex-col gap-1 px-2">
+          {[
+            { id: 'Rig Telemetry', icon: 'dashboard' },
+            { id: 'Trajectory Optimization', icon: 'explore' },
+            { id: 'BHA Control', icon: 'precision_manufacturing' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                setActiveTab(tab.id);
+                playRadarBeep(1200, 0.08, "sine");
+              }}
+              className={`flex items-center gap-4 p-3.5 rounded-xl font-label-caps text-xs tracking-wider font-bold transition-all duration-200 text-left ${
+                activeTab === tab.id 
+                  ? 'bg-primary-container/20 text-primary border-r-4 border-primary shadow-lg shadow-primary-container/10' 
+                  : 'text-on-surface-variant hover:bg-surface-variant/10 hover:text-primary'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[20px]">{tab.icon}</span>
+              <span>{tab.id.toUpperCase()}</span>
             </button>
           ))}
         </nav>
 
         {/* Hidden Signature Watermark Footer */}
-        <div className="p-6 border-t border-slate-800/40 flex flex-col items-center justify-center opacity-20 hover:opacity-80 transition-all duration-500 select-none no-print">
+        <div className="p-6 border-t border-outline-variant/10 flex flex-col items-center justify-center opacity-10 hover:opacity-80 transition-all duration-500 select-none">
           <svg className="w-28 h-12 text-slate-500 hover:text-amber-400 transition-colors duration-300" viewBox="0 0 160 65" fill="none">
             {/* Main sweeping left S/E cursive loop */}
             <path 
@@ -842,207 +902,216 @@ export default function Dashboard() {
         </div>
       </aside>
 
-      {/* Main Content - HIDDEN during print */}
-      <div className="flex-1 flex flex-col relative overflow-x-auto h-full no-print">
-        <header className="h-20 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between px-8">
-           <h2 className="text-xl font-bold text-slate-100">{activeTab}</h2>
-           <div className="flex items-center space-x-3 flex-shrink-0">
-              {/* Data Feed Selector */}
-              <div className="flex items-center space-x-2 bg-slate-950/40 border border-slate-800 rounded-xl px-3 py-1.5 h-10">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-mono">Feed:</span>
-                <select
-                  value={dataSource}
-                  onChange={(e) => setDataSource(e.target.value)}
-                  className="bg-slate-900 border border-slate-850 rounded-lg text-xs font-bold text-slate-200 px-2.5 py-1 outline-none cursor-pointer hover:border-slate-700 transition-all font-mono"
-                >
-                  <option value="simulated">Clean Sim</option>
-                  <option value="field">Live Utah FORGE</option>
-                </select>
-              </div>
-
-              {/* Basin Geology (Calibration) Selector */}
-              <div className="flex items-center space-x-2 bg-slate-950/40 border border-slate-800 rounded-xl px-3 py-1.5 h-10">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-mono">Geology:</span>
-                <select
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="bg-slate-900 border border-slate-850 rounded-lg text-xs font-bold text-slate-200 px-2.5 py-1 outline-none cursor-pointer hover:border-slate-700 transition-all font-mono"
-                >
-                  <option value="permian_basin">Permian Basin</option>
-                  <option value="volve_field">Volve Field</option>
-                  <option value="gom_deepwater">GoM Deepwater</option>
-                  <option value="arabian_basin">Middle East</option>
-                </select>
-              </div>
-
-              <div className="flex items-center space-x-2 bg-slate-950/40 border border-slate-800 rounded-xl px-3 py-1.5 h-10 flex-shrink-0">
-                <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase font-mono">Stress Mode</span>
-                <button
-                  onClick={() => {
-                    setChaosMode(prev => !prev);
-                    console.log("Omesham: Toggled Stress Test Mode:", !chaosMode);
-                  }}
-                  className={`w-8 h-4.5 rounded-full transition-all duration-300 relative flex items-center p-0.5 ${chaosMode ? 'bg-gradient-to-r from-red-600 to-amber-500 shadow-[0_0_12px_rgba(239,68,68,0.45)]' : 'bg-slate-800'}`}
-                >
-                  <div className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transform transition-all duration-300 ${chaosMode ? 'translate-x-3.5' : 'translate-x-0'}`}></div>
-                </button>
-              </div>
-              <button 
-                 onClick={() => setShowReportModal(true)}
-                 className="px-3.5 py-1.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-slate-950 font-bold rounded-lg text-xs tracking-wider uppercase transition-all shadow-lg flex items-center space-x-1.5 flex-shrink-0 h-10"
-              >
-                 <svg className="w-4 h-4 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                 <span>Shift Report</span>
-              </button>
-              <div className="text-right flex-shrink-0 pl-1">
-                 <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest font-mono leading-none">Current Depth</p>
-                 <p className="text-sm font-mono font-bold text-amber-400 mt-1 leading-none">{currentDepth.toFixed(1)} <span className="text-[10px] text-slate-600">ft</span></p>
-              </div>
-           </div>
-        </header>
-
-        <main className="flex-1 overflow-y-auto p-8 relative h-full">
-          <div style={{ display: activeTab === 'Rig Telemetry' ? 'block' : 'none' }} className="h-full">
-            <RigTelemetry telemetry={telemetry} currentDepth={currentDepth} />
+      {/* 3. MAIN COMMAND CANVAS CONTAINER */}
+      <main className="ml-64 flex-1 pt-20 p-6 relative z-20 flex flex-col h-screen overflow-y-auto">
+        
+        {/* Dynamic Section Header */}
+        <div className="flex justify-between items-end mb-8 shrink-0 no-print">
+          <div>
+            <h1 className="font-display-lg text-4xl text-primary font-black tracking-tight uppercase">STRATOS-09 DEPLOYMENT</h1>
+            <div className="flex gap-4 mt-2">
+              <span className="bg-slate-900 border border-outline-variant/30 px-3 py-1 rounded text-primary font-mono text-[10px] tracking-wide">WELL ID: WH-NG-OML17</span>
+              <span className="flex items-center gap-2 text-on-surface-variant font-mono text-[10px] font-bold tracking-wider">
+                <span className={`w-2 h-2 rounded-full ${chaosMode ? 'bg-red-500 animate-ping' : 'bg-primary animate-pulse'}`}></span>
+                SYSTEM FEED: {chaosMode ? "STRESS ACTIVE" : "NOMINAL"}
+              </span>
+            </div>
           </div>
-          <div style={{ display: activeTab === 'Trajectory Optimization' ? 'block' : 'none' }} className="h-full">
-            <TrajectoryOptimization currentDepth={currentDepth} />
+          <div>
+            <button 
+              onClick={() => {
+                setShowReportModal(true);
+                playRadarBeep(980, 0.12, "sine");
+              }}
+              className="glass-panel px-5 py-2.5 rounded-lg font-label-caps text-xs tracking-wider uppercase border-primary/20 hover:border-primary text-slate-100 font-bold transition-all"
+            >
+              GENERATE SHIFT REPORT
+            </button>
           </div>
-          <div style={{ display: activeTab === 'BHA Control' ? 'block' : 'none' }} className="h-full">
-            <BHAControl currentDepth={currentDepth} telemetry={telemetry} />
-          </div>
-        </main>
-      </div>
+        </div>
 
-      {/* --- PREMIUM PRINTABLE GLASSMORPHIC OPERATIONS REPORT OVERLAY --- */}
-      {showReportModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[99999] flex items-center justify-center p-6 overflow-y-auto no-print">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl p-8 max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col justify-between">
-            {/* Modal Header Controls */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
-              <div>
-                <h3 className="text-xl font-bold text-slate-100 flex items-center space-x-2">
-                  <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                  <span>Operations Shift Report — Rig-01</span>
-                </h3>
-                <p className="text-xs text-slate-500 mt-1 font-semibold uppercase tracking-wider">Automated Drilling Diagnostics Document</p>
+        {/* GRID SPLITTER (Layout split between Tab Contents and side widgets) */}
+        <div className="grid grid-cols-12 gap-6 flex-1 min-h-0">
+          
+          {/* Main viewport panels */}
+          <div className="col-span-12 xl:col-span-8 flex flex-col h-full">
+            {activeTab === 'Rig Telemetry' && (
+              <RigTelemetry 
+                telemetry={telemetry} 
+                currentDepth={currentDepth} 
+                onFeedbackSubmit={onFeedbackSubmit}
+                feedbackToast={feedbackToast}
+              />
+            )}
+            {activeTab === 'Trajectory Optimization' && (
+              <TrajectoryOptimization currentDepth={currentDepth} />
+            )}
+            {activeTab === 'BHA Control' && (
+              <BHAControl currentDepth={currentDepth} telemetry={telemetry} />
+            )}
+          </div>
+
+          {/* AI Side widgets panel (Gauges and geology profile) */}
+          <div className="col-span-12 xl:col-span-4 space-y-6 shrink-0 no-print">
+            
+            {/* Threat index circle gauge */}
+            <div className="glass-panel p-6 rounded-xl flex flex-col items-center">
+              <h3 className="font-label-caps text-label-caps text-primary mb-6 w-full text-center tracking-widest uppercase">AI Threat Index</h3>
+              <div className="relative w-44 h-44 flex items-center justify-center">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" fill="none" r="45" stroke="#1b1b1d" strokeWidth="6"></circle>
+                  <circle 
+                    className="transition-all duration-500" 
+                    cx="50" cy="50" fill="none" r="45" 
+                    stroke={threatIndex > 30 ? "#f59e0b" : "#c0c6de"} 
+                    strokeDasharray="282.7" 
+                    strokeDashoffset={282.7 - (282.7 * Math.min(threatIndex, 100)) / 100} 
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                  ></circle>
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="font-display-lg text-4xl text-slate-100 font-mono font-bold">{threatIndex.toFixed(0)}%</span>
+                  <span className={`font-label-caps text-[9px] tracking-widest uppercase mt-1 font-bold ${threatIndex > 30 ? 'text-amber-400' : 'text-slate-500'}`}>
+                    {threatIndex > 45 ? 'HIGH RISK' : threatIndex > 25 ? 'STRESS WARNING' : 'LOW RISK'}
+                  </span>
+                </div>
               </div>
-              <div className="flex space-x-3">
-                <button 
-                  onClick={() => window.print()}
-                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-xs uppercase tracking-wider transition-all"
-                >
-                  Print / Save PDF
-                </button>
-                <button 
-                  onClick={() => setShowReportModal(false)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-lg text-xs uppercase tracking-wider transition-all"
-                >
-                  Close
-                </button>
+
+              {/* Threat factors */}
+              <div className="mt-5 w-full space-y-2 border-t border-outline-variant/10 pt-4">
+                <div className="flex justify-between font-label-caps text-[10px] tracking-wide font-medium">
+                  <span>Downhole Motor stall risk:</span>
+                  <span className={threatIndex > 30 ? 'text-amber-400 font-mono' : 'text-slate-400 font-mono'}>{(threatIndex * 0.4).toFixed(1)}%</span>
+                </div>
+                <div className="flex justify-between font-label-caps text-[10px] tracking-wide font-medium">
+                  <span>Torsional stick-slip:</span>
+                  <span className={threatIndex > 45 ? 'text-red-400 font-mono font-bold' : 'text-slate-400 font-mono'}>
+                    {threatIndex > 45 ? 'SEVERE' : threatIndex > 25 ? 'MODERATE' : 'STABLE'}
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Document Frame */}
-            <div id="printable-report" className="bg-slate-950 border border-slate-800 rounded-xl p-8 font-mono text-xs text-slate-300 leading-relaxed shadow-inner">
-              {/* Header Box */}
-              <div className="border-b-2 border-slate-700 pb-6 mb-6 flex justify-between items-start">
+            {/* Geological Map Layer displaying our local asset */}
+            <div className="glass-panel rounded-xl overflow-hidden shadow-lg border border-outline-variant/20">
+              <div className="relative h-44 overflow-hidden border-b border-outline-variant/10 bg-slate-950">
+                <img 
+                  className="w-full h-full object-cover opacity-80" 
+                  alt="Scientific visualization of deep earth geological layers" 
+                  src="/images/geological_cross_section.png"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent pointer-events-none"></div>
+              </div>
+              <div className="p-4 bg-slate-900/60 backdrop-blur-sm">
+                <p className="font-label-caps text-label-caps text-primary uppercase tracking-widest font-bold">CURRENT GEOLOGY: BASALT STRATA</p>
+                <p className="text-[10px] text-on-surface-variant font-medium mt-1 leading-normal font-sans">
+                  Estimated Strata Depth: 12,000 ft - 13,500 ft | Compressive Strength: Hard | Porosity: 8%
+                </p>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </main>
+
+      {/* =====================================================================
+                             SHIFT REPORT MODAL
+         ===================================================================== */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-6">
+          <div className="glass-panel max-w-2xl w-full p-8 border-primary/30 rounded-2xl relative overflow-hidden shadow-2xl">
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl"></div>
+            
+            <div className="border-b border-outline-variant/30 pb-6 mb-6">
+              <p className="font-label-caps text-primary tracking-[0.3em] mb-2 text-xs font-bold">OFFICIAL SHIFT DOCUMENTATION</p>
+              <h2 className="font-display-lg text-3xl font-black text-slate-100 uppercase">OPERATIONAL REPORT #2944</h2>
+              <div className="flex justify-between mt-4 font-mono text-[9px] text-slate-500 font-bold uppercase tracking-wider">
+                <span>DATE: {new Date().toLocaleDateString()}</span>
+                <span>OPERATOR: AYODEJI ERIOLUWA</span>
+                <span>SYSTEM: OMESHAM AI CO-PILOT</span>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-8">
                 <div>
-                  <h1 className="text-lg font-bold text-slate-100 uppercase tracking-widest">OMESHAM RIG INTELLIGENCE CORE</h1>
-                  <p className="text-[10px] text-slate-500 mt-1 font-semibold uppercase font-mono">Security Identity: SSO OPERATOR SECURE NODE</p>
-                  <p className="text-[10px] text-slate-400 mt-1">Generated: {new Date().toLocaleString()}</p>
+                  <h4 className="font-label-caps text-xs text-primary mb-3 uppercase tracking-widest font-bold">SUMMARY METRICS</h4>
+                  <div className="space-y-2.5 text-sm">
+                    <div className="flex justify-between border-b border-outline-variant/10 pb-1 font-sans">
+                      <span className="text-slate-400 font-medium">Total Shift Depth</span>
+                      <span className="font-mono text-slate-100 font-bold">{currentDepth.toFixed(1)} ft</span>
+                    </div>
+                    <div className="flex justify-between border-b border-outline-variant/10 pb-1 font-sans">
+                      <span className="text-slate-400 font-medium">Avg Rotary Speed</span>
+                      <span className="font-mono text-slate-100 font-bold">
+                        {(telemetry.reduce((acc, val) => acc + val.rpm, 0) / Math.max(telemetry.length, 1)).toFixed(0)} rpm
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-b border-outline-variant/10 pb-1 font-sans">
+                      <span className="text-slate-400 font-medium">Non-Productive Time</span>
+                      <span className="font-mono text-red-400 font-bold">
+                        {alertLogs.length > 0 ? `${(alertLogs.length * 0.4).toFixed(1)} mins` : '0.0 mins'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-right border-l border-slate-800 pl-6 font-mono">
-                  <p className="text-slate-500 uppercase font-semibold text-[10px]">Shift Summary Status</p>
-                  <p className="text-emerald-400 font-bold text-sm uppercase tracking-wide mt-1">✓ Nominally Standard</p>
-                  <p className="text-slate-400 mt-1">Interval Depth: {currentDepth.toFixed(1)} ft</p>
-                </div>
-              </div>
 
-              {/* Stats Grid */}
-              <div className="mb-6">
-                <h2 className="text-[11px] font-bold text-amber-500 uppercase tracking-wider mb-3 border-b border-slate-800 pb-1">1. Torsional & Hydraulic Performance Averages</h2>
-                <div className="grid grid-cols-4 gap-4 bg-slate-900/50 border border-slate-800/80 rounded-lg p-4">
-                  <div>
-                    <span className="text-[10px] text-slate-500 uppercase block">Weight on Bit</span>
-                    <span className="text-slate-200 text-sm font-bold font-mono block mt-1">{getAverage('wob_klbs').toFixed(1)} <span className="text-[10px] text-slate-500">klbs</span></span>
-                    <span className="text-[10px] text-slate-600 font-mono mt-0.5 block">Min: {getMin('wob_klbs').toFixed(1)} / Max: {getMax('wob_klbs').toFixed(1)}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 uppercase block">Rotary Speed</span>
-                    <span className="text-slate-200 text-sm font-bold font-mono block mt-1">{getAverage('rpm').toFixed(0)} <span className="text-[10px] text-slate-500">RPM</span></span>
-                    <span className="text-[10px] text-slate-600 font-mono mt-0.5 block">Min: {getMin('rpm').toFixed(0)} / Max: {getMax('rpm').toFixed(0)}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 uppercase block">Standpipe Pressure</span>
-                    <span className="text-slate-200 text-sm font-bold font-mono block mt-1">{getAverage('spp_psi').toFixed(0)} <span className="text-[10px] text-slate-500">PSI</span></span>
-                    <span className="text-[10px] text-slate-600 font-mono mt-0.5 block">Min: {getMin('spp_psi').toFixed(0)} / Max: {getMax('spp_psi').toFixed(0)}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 uppercase block">Avg ROP rate</span>
-                    <span className="text-slate-200 text-sm font-bold font-mono block mt-1">{getAverage('rop_fph').toFixed(1)} <span className="text-[10px] text-slate-500">ft/hr</span></span>
-                    <span className="text-[10px] text-slate-600 font-mono mt-0.5 block">Min: {getMin('rop_fph').toFixed(0)} / Max: {getMax('rop_fph').toFixed(0)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Trajectory Optimization Card */}
-              <div className="mb-6">
-                <h2 className="text-[11px] font-bold text-amber-500 uppercase tracking-wider mb-3 border-b border-slate-800 pb-1">2. Wellbore Trajectory Optimization Profile</h2>
-                <div className="p-4 bg-slate-900/50 border border-slate-800/80 rounded-lg space-y-2">
-                  <div className="flex justify-between border-b border-slate-800/60 pb-1">
-                    <span className="text-slate-400">Vertical Depth (TVD):</span>
-                    <span className="font-bold text-slate-200">{(currentDepth * 0.95).toFixed(1)} ft</span>
-                  </div>
-                  <div className="flex justify-between border-b border-slate-800/60 pb-1">
-                    <span className="text-slate-400">Total Departure:</span>
-                    <span className="font-bold text-slate-200">{(currentDepth * 0.15).toFixed(1)} ft</span>
-                  </div>
-                  <div className="flex justify-between pb-1">
-                    <span className="text-slate-400">Steering Method / Mode:</span>
-                    <span className="font-bold text-teal-400">3D Continuous RSS steering</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* AI Alert Logs */}
-              <div>
-                <h2 className="text-[11px] font-bold text-amber-500 uppercase tracking-wider mb-3 border-b border-slate-800 pb-1">3. Live AI Co-Driller Preventive Action Logs</h2>
-                <div className="max-h-[180px] overflow-y-auto space-y-2 pr-2">
-                  {alertLogs.length === 0 ? (
-                    <p className="text-slate-500 italic p-4 text-center border border-slate-800/60 rounded bg-slate-900/30">No torsional anomalies or preventive hazards detected during this shift. Well dynamics remaining stable.</p>
-                  ) : (
-                    alertLogs.map((log, index) => (
-                      <div key={index} className="flex justify-between items-start p-3 bg-slate-900/40 border border-slate-800 rounded text-[11px]">
-                        <div className="flex-1 pr-6">
-                          <p className={`font-bold ${log.type === "Predictive Alert" ? 'text-amber-400' : 'text-red-400'} uppercase flex items-center space-x-1.5`}>
-                            <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
-                            <span>{log.type} ({log.risk.toFixed(0)}% risk)</span>
-                          </p>
-                          <p className="text-slate-400 mt-1 font-sans text-xs">{log.message}</p>
+                <div>
+                  <h4 className="font-label-caps text-xs text-primary mb-3 uppercase tracking-widest font-bold">DYSFUNCTION EVENTS LOG</h4>
+                  <div className="max-h-32 overflow-y-auto space-y-2 pr-2">
+                    {alertLogs.length === 0 ? (
+                      <p className="text-[10px] text-slate-500 italic">No drillstring dysfunctions or hydraulic anomalies logged during this shift.</p>
+                    ) : (
+                      alertLogs.map((log, idx) => (
+                        <div key={idx} className="flex gap-2 items-start text-[10px] bg-[#0e0e0f] border border-outline-variant/10 p-2 rounded">
+                          <span className={log.type === "Predictive Alert" ? "text-amber-500 font-black shrink-0" : "text-red-500 font-black shrink-0"}>●</span>
+                          <span className="text-slate-300 leading-normal font-sans font-medium">{log.timestamp} - {log.type}: {log.message}</span>
                         </div>
-                        <div className="text-right text-[10px] text-slate-500 font-mono shrink-0">
-                          {log.timestamp}
-                        </div>
-                      </div>
-                    ))
-                  )}
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Signatures */}
-              <div className="border-t border-slate-800 mt-8 pt-8 flex justify-between font-mono">
-                <div className="border-t border-slate-700 w-44 pt-2 text-center text-[9px] uppercase tracking-wider text-slate-500 font-semibold">
-                  Drilling Superintendent
-                </div>
-                <div className="border-t border-slate-700 w-44 pt-2 text-center text-[9px] uppercase tracking-wider text-slate-500 font-semibold">
-                  Authorized AI Auditor
-                </div>
+              {/* Handover comments input */}
+              <div className="bg-primary/5 p-4 rounded-xl border border-primary/10">
+                <p className="font-label-caps text-[10px] text-primary mb-2 uppercase tracking-widest font-bold">SECURE OPERATOR HANDOVER NOTES</p>
+                <textarea 
+                  value={handoverNotes}
+                  onChange={(e) => setHandoverNotes(e.target.value)}
+                  className="w-full bg-slate-950/50 border border-outline-variant/15 focus:border-primary focus:ring-0 text-xs h-24 p-3 rounded-lg placeholder-slate-600 text-slate-200" 
+                  placeholder="Enter secure well handover instructions, motor tool status, or formation anomalies here..."
+                ></textarea>
               </div>
+            </div>
+
+            <div className="mt-8 flex justify-end gap-4 border-t border-outline-variant/10 pt-6">
+              <button 
+                onClick={() => {
+                  setShowReportModal(false);
+                  playRadarBeep(600, 0.1, "sine");
+                }}
+                className="px-6 py-2.5 font-label-caps text-xs tracking-wider uppercase hover:bg-surface-variant/20 rounded-lg font-bold"
+              >
+                CANCEL
+              </button>
+              <button 
+                onClick={() => {
+                  setShowReportModal(false);
+                  playRadarBeep(1400, 0.2, "sine");
+                }}
+                className="px-8 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold font-label-caps text-xs tracking-wider uppercase rounded-lg shadow-lg shadow-amber-500/10"
+              >
+                AUTHORIZE & SUBMIT
+              </button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }
