@@ -808,6 +808,38 @@ export default function Dashboard() {
             </button>
           ))}
         </nav>
+
+        {/* Hidden Signature Watermark Footer */}
+        <div className="p-6 border-t border-slate-800/40 flex flex-col items-center justify-center opacity-20 hover:opacity-80 transition-all duration-500 select-none no-print">
+          <svg className="w-28 h-12 text-slate-500 hover:text-amber-400 transition-colors duration-300" viewBox="0 0 160 65" fill="none">
+            {/* Main sweeping left S/E cursive loop */}
+            <path 
+              d="M 25,48 C 15,48 10,38 12,28 C 15,12 32,5 48,10 C 60,14 62,24 50,32 C 40,38 28,42 22,46 C 15,50 12,56 16,60 C 22,64 35,62 48,54 C 55,50 60,42 63,33 C 65,27 68,23 72,21" 
+              stroke="currentColor" 
+              strokeWidth="2.5" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+            />
+            {/* Middle connecting loops */}
+            <path 
+              d="M 72,21 C 76,20 80,24 82,28 C 84,32 82,38 85,42 C 87,45 92,42 95,38 C 98,34 98,28 101,24 C 103,20 106,18 109,21 C 112,24 110,32 113,38 C 115,42 118,44 122,42 C 126,40 129,35 132,30" 
+              stroke="currentColor" 
+              strokeWidth="2.5" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+            />
+            {/* High-speed bold underscore diagonal slash */}
+            <path 
+              d="M 14,48 L 18,48 C 24,48 45,52 65,51 C 85,50 110,44 135,38 L 155,34" 
+              stroke="currentColor" 
+              strokeWidth="2.5" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+            />
+            {/* Top right flourish dot */}
+            <circle cx="118" cy="18" r="1.5" fill="currentColor" />
+          </svg>
+        </div>
       </aside>
 
       {/* Main Content - HIDDEN during print */}
