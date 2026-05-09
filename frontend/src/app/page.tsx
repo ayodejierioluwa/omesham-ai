@@ -205,6 +205,41 @@ export default function Dashboard() {
   const ropVal = currentPt?.rop_fph !== undefined ? Math.max(0.0, currentPt.rop_fph) : 45.2;
   const threatIndex = currentPt?.forecast_risk !== undefined ? Math.min(100, Math.max(0, currentPt.forecast_risk)) : 28;
 
+  // Helper to get dynamic geological formation info based on current wellbore depth
+  const getGeologyInfo = (depth: number) => {
+    if (depth < 4000) {
+      return {
+        name: "CLAY & SANDSTONE CAP",
+        thickness: "1,200m",
+        porosity: "24%",
+        pressure: "Normal"
+      };
+    } else if (depth < 8000) {
+      return {
+        name: "JURASSIC SHALE LAYER",
+        thickness: "2,100m",
+        porosity: "18%",
+        pressure: "Elevated"
+      };
+    } else if (depth < 12000) {
+      return {
+        name: "HIGH-COMPACTION BASALT STRATA",
+        thickness: "1,800m",
+        porosity: "12%",
+        pressure: "High"
+      };
+    } else {
+      return {
+        name: "META-GRANITE BASEMENT",
+        thickness: "Deep Horizon",
+        porosity: "4%",
+        pressure: "Extreme"
+      };
+    }
+  };
+
+  const geoInfo = getGeologyInfo(currentDepth);
+
   // Real-time lateral vibration index G
   const calculateVibration = () => {
     if (!currentPt) return 0.4;
@@ -406,7 +441,7 @@ export default function Dashboard() {
           <div>
             <h1 className="text-4xl text-[#c0c6de] font-extrabold tracking-tight select-none">STRATOS-09 DEPLOYMENT</h1>
             <div className="flex gap-4 mt-2 font-mono text-[11px]">
-              <span className="bg-[#353436] px-3 py-1 rounded text-[#c0c6de] border border-[#46464c]/50">WELL ID: WH-NG-OML17</span>
+              <span className="bg-[#353436] px-3 py-1 rounded text-[#c0c6de] border border-[#46464c]/50">WELL ID: WH-9942-X</span>
               <span className="flex items-center gap-2 text-[#c6c6cd] font-bold tracking-wider">
                 <span className={`w-2.5 h-2.5 rounded-full ${chaosMode ? 'bg-[#ffb4ab] animate-ping' : 'bg-[#c0c6de] animate-pulse'}`}></span>
                 SYSTEM HEALTH: {chaosMode ? "CRITICAL RISK" : "NOMINAL"}
@@ -450,10 +485,11 @@ export default function Dashboard() {
                   <div className="absolute top-0 right-0 w-16 h-16 opacity-5 group-hover:opacity-10 transition-opacity">
                     <span className="material-symbols-outlined text-6xl text-[#c0c6de]">straighten</span>
                   </div>
-                  <p className="font-mono text-[10px] text-[#c6c6cd] mb-4 uppercase tracking-widest">WELL DEPTH (MD)</p>
-                  <p className="text-xl lg:text-2xl font-mono text-[#c0c6de] font-bold">
-                    {currentDepth.toFixed(1)} <span className="text-xs text-[#c6c6cd]">m</span>
+                  <p className="font-mono text-[10px] text-[#c6c6cd] mb-4 uppercase tracking-widest leading-normal">WELL DEPTH<br />(MD)</p>
+                  <p className="text-xl lg:text-2xl font-mono text-[#c0c6de] font-bold leading-tight">
+                    {currentDepth.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
                   </p>
+                  <p className="text-xs text-[#c6c6cd] font-mono mt-1">m</p>
                   <div className="mt-4 h-1 w-full bg-[#353436] rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-[#c0c6de] shadow-[0_0_8px_rgba(192,198,222,0.8)]"
@@ -480,7 +516,7 @@ export default function Dashboard() {
                 <div className="glass-panel p-5 relative overflow-hidden group rounded-lg">
                   <p className="font-mono text-[10px] text-[#c6c6cd] mb-4 uppercase tracking-widest">BIT ROTATION</p>
                   <p className="text-xl lg:text-2xl font-mono text-[#e4bfaa] font-bold">
-                    {rpmVal} <span className="text-xs text-[#c6c6cd]">RPM</span>
+                    {rpmVal.toFixed(1)} <span className="text-xs text-[#c6c6cd]">RPM</span>
                   </p>
                   <div className="mt-4 h-1 w-full bg-[#353436] rounded-full overflow-hidden">
                     <div 
@@ -506,8 +542,8 @@ export default function Dashboard() {
 
               </div>
 
-              {/* Restored Side-by-Side Row matching original Stitch box widths */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Restored Stacked Layout matching original Stitch box positions */}
+              <div className="flex flex-col gap-6">
 
                 {/* Real-time dynamics chart (Large card) */}
                 <div className="glass-panel p-6 rounded-lg flex flex-col min-h-[280px]">
@@ -523,34 +559,46 @@ export default function Dashboard() {
                   </div>
 
                   {/* Chart body */}
-                  <div className="flex-1 flex space-x-4">
-                    {/* Y Axis scale */}
-                    <div className="flex flex-col justify-between text-[9px] text-[#c6c6cd]/60 font-mono font-bold py-2 border-r border-[#46464c]/20 pr-3 select-none h-full h-[180px]">
-                      <span>45k ft-lbs</span>
-                      <span>30k ft-lbs</span>
-                      <span>15k ft-lbs</span>
-                      <span>0 ft-lbs</span>
+                  <div className="flex-1 flex gap-4">
+                    {/* Y Axis scale - Clean, low-contrast, precise */}
+                    <div className="flex flex-col justify-between text-[8px] text-[#c6c6cd]/40 font-mono font-bold py-1 select-none h-[180px] text-right min-w-[50px]">
+                      <span>45,000</span>
+                      <span>30,000</span>
+                      <span>15,000</span>
+                      <span>0</span>
                     </div>
 
-                    <div className="flex-1 flex items-end gap-2 px-2 h-[180px] bg-[#1b1b1d]/20 border-l border-b border-[#46464c]/30 rounded-bl relative pt-4 pb-1">
-                      {/* 12 columns representing physical real-time telemetry elements */}
-                      {telemetry.slice(-12).map((pt, idx) => {
-                        const heightPct = Math.min((pt.torque_ftlbs / 45000) * 100, 100);
-                        const isAnomaly = pt.is_anomaly;
-                        
-                        return (
-                          <div key={idx} className="flex-1 flex flex-col justify-end h-full group relative">
-                            <div 
-                              className={`w-full rounded-t border-t transition-all duration-300 crt-flicker ${
-                                isAnomaly 
-                                  ? 'bg-gradient-to-t from-[#93000a]/10 to-[#93000a]/60 border-[#ffb4ab] shadow-[0_0_8px_#ffb4ab]' 
-                                  : 'bg-gradient-to-t from-[#c0c6de]/5 to-[#c0c6de]/40 border-[#c0c6de]/50'
-                              }`}
-                              style={{ height: `${heightPct}%` }}
-                            ></div>
-                          </div>
-                        );
-                      })}
+                    <div className="flex-1 flex flex-col justify-end">
+                      {/* Bars container */}
+                      <div className="w-full flex items-end gap-3 h-[180px] border-b border-l border-[#1a191d] relative pt-4 pb-0.5 px-2">
+                        {/* 12 columns representing physical real-time telemetry elements */}
+                        {telemetry.slice(-12).map((pt, idx) => {
+                          const heightPct = Math.min((pt.torque_ftlbs / 45000) * 100, 100);
+                          const isAnomaly = pt.is_anomaly;
+                          
+                          return (
+                            <div key={idx} className="flex-1 flex flex-col justify-end h-full group relative">
+                              <div 
+                                className={`w-full rounded-sm transition-all duration-300 ${
+                                  isAnomaly 
+                                    ? 'bg-gradient-to-t from-[#93000a]/20 to-[#93000a]/80 border-t border-[#ffb4ab] shadow-[0_0_8px_#ffb4ab]' 
+                                    : 'bg-gradient-to-t from-[#201f21]/10 to-[#c0c6de]/30 border-t border-[#c0c6de]/20'
+                                }`}
+                                style={{ height: `${heightPct}%` }}
+                              ></div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* X Axis Time Labels */}
+                      <div className="flex justify-between text-[8px] text-[#c6c6cd]/40 font-mono font-bold mt-1.5 px-2 select-none">
+                        <span>-120s</span>
+                        <span>-90s</span>
+                        <span>-60s</span>
+                        <span>-30s</span>
+                        <span className="text-[#e4bfaa] animate-pulse">LIVE</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -580,7 +628,7 @@ export default function Dashboard() {
                   </div>
 
                   {/* Animated SVG Schematic */}
-                  <div className="flex justify-center items-center h-48 bg-[#1b1b1d]/20 rounded border border-[#46464c]/10 p-2">
+                  <div className="flex justify-center items-center h-48 p-2">
                     <svg className="h-full drop-shadow-[0_0_15px_rgba(192,198,222,0.3)]" viewBox="0 0 100 200" fill="none">
                       <defs>
                         <linearGradient id="bhaMetal" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -679,92 +727,47 @@ export default function Dashboard() {
                   <h3 className="font-mono text-[11px] font-bold text-[#c0c6de] uppercase tracking-widest">AI Recommendations</h3>
                 </div>
 
-                {currentPt?.is_anomaly ? (
-                  <div className="space-y-4 flex-1 flex flex-col justify-between">
-                    <div className="bg-[#93000a]/10 p-4 border-l-4 border-[#ffb4ab] rounded-r">
-                      <p className="font-mono text-[10px] text-[#ffb4ab] mb-1 font-bold uppercase tracking-wider">FORMATION DYSFUNCTION TRIGGERED</p>
-                      <p className="text-xs text-slate-300 leading-normal font-sans font-medium">{currentPt.recommended_solution}</p>
-                    </div>
-
+                <div className="space-y-4">
+                  {/* Formation Transition Box */}
+                  <div className="bg-[#1b1b1d]/40 p-4 border border-[#46464c]/20 rounded-lg">
+                    <p className="font-mono text-[10px] text-[#e5e2e3] mb-1 font-bold uppercase tracking-wider">FORMATION TRANSITION DETECTED</p>
+                    <p className="text-xs text-[#c6c6cd] leading-normal font-sans font-medium">
+                      Increase WOB to 28 klbs and reduce RPM to 120 to optimize ROP in upcoming Shale layer.
+                    </p>
                     <button 
-                      onClick={() => onFeedbackSubmit('correct')}
-                      className="w-full bg-[#ffb4ab] text-[#690005] font-extrabold py-2.5 rounded-lg text-xs tracking-wider uppercase transition-all shadow-lg flex items-center justify-center gap-2"
+                      onClick={() => {
+                        onFeedbackSubmit('correct');
+                        playRadarBeep(1100, 0.1, "sine");
+                      }}
+                      className="mt-3 text-[10px] text-[#c0c6de] hover:text-[#e5e2e3] font-mono font-bold tracking-wider flex items-center gap-1 uppercase transition-colors"
                     >
-                      <span>EXECUTE OPTIMIZATION</span>
-                      <span className="material-symbols-outlined text-xs font-bold">arrow_forward</span>
+                      <span>Execute Optimization</span>
+                      <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
                     </button>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="bg-[#020617]/20 p-4 border-l-4 border-[#c0c6de] rounded-r">
-                      <p className="font-mono text-[10px] text-[#c0c6de] mb-1 font-bold uppercase tracking-wider">TRANSITION ADVICE</p>
-                      <p className="text-xs text-slate-300 leading-relaxed font-sans font-medium">Maintain active rotary setpoint parameters. Safe operating envelope is physically balanced.</p>
-                    </div>
-                  </div>
-                )}
-              </div>
 
-              {/* Geology Map Card - Code-driven active moving wave scanner */}
-              <div className="glass-panel overflow-hidden rounded-lg">
-                <div className="relative h-40 bg-[#0e0e0f] overflow-hidden border-b border-[#46464c]/20 flex items-center justify-center">
-                  {/* Subtle scanning crossgrid lines */}
-                  <div className="absolute inset-0 bg-[linear-gradient(rgba(192,198,222,0.02)_1px,transparent_1px)] bg-[size:100%_8px] pointer-events-none"></div>
-                  <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(192,198,222,0.02)_1px,transparent_1px)] bg-[size:8px_100%] pointer-events-none"></div>
-                  
-                  {/* Animated vector strata lines and waves */}
-                  <svg className="w-full h-full" viewBox="0 0 200 100" preserveAspectRatio="none">
-                    {/* Strata Layer 1 (Topsoil curve) */}
-                    <path 
-                      d="M 0,22 Q 50,14 100,28 T 200,22 L 200,100 L 0,100 Z" 
-                      fill="rgba(192, 198, 222, 0.05)" 
-                      stroke="rgba(192, 198, 222, 0.15)" 
-                      strokeWidth="0.75" 
-                    />
-                    {/* Strata Layer 2 (Jurassic shale folding) */}
-                    <path 
-                      d="M 0,48 Q 65,54 125,42 T 200,48 L 200,100 L 0,100 Z" 
-                      fill="rgba(228, 191, 170, 0.04)" 
-                      stroke="rgba(228, 191, 170, 0.15)" 
-                      strokeWidth="0.75" 
-                    />
-                    {/* Strata Layer 3 (Basalt targets) */}
-                    <path 
-                      d="M 0,74 Q 45,68 105,78 T 200,74 L 200,100 L 0,100 Z" 
-                      fill="rgba(190, 198, 224, 0.03)" 
-                      stroke="rgba(190, 198, 224, 0.15)" 
-                      strokeWidth="0.75" 
-                    />
-
-                    {/* Vertical wellbore path */}
-                    <line x1="100" y1="0" x2="100" y2="100" stroke="#c0c6de" strokeWidth="1" strokeDasharray="2,3" opacity="0.5" />
-                    
-                    {/* Blinking drill-bit target tracking node */}
-                    {(() => {
-                      const bitY = 15 + ((currentDepth * 0.4) % 75);
-                      return (
-                        <g>
-                          <circle cx="100" cy={bitY} r="4" fill="#e4bfaa" className="animate-ping" />
-                          <circle cx="100" cy={bitY} r="2" fill="#e4bfaa" />
-                        </g>
-                      );
-                    })()}
-
-                    {/* Scanning radar neon sweeping laser */}
-                    <line x1="0" y1="0" x2="200" y2="0" stroke="#e4bfaa" strokeWidth="1.5" className="opacity-80 drop-shadow-[0_0_8px_#e4bfaa]">
-                      <animate attributeName="y1" values="5;95;5" dur="4s" repeatCount="indefinite" />
-                      <animate attributeName="y2" values="5;95;5" dur="4s" repeatCount="indefinite" />
-                    </line>
-                  </svg>
-
-                  {/* Top-left radar telemetry display overlay */}
-                  <div className="absolute top-2.5 left-3 font-mono text-[8px] text-[#c6c6cd]/50 space-y-0.5 select-none leading-none">
-                    <div>SYS.RADAR: ONLINE</div>
-                    <div>SEISMIC DEPTH: {currentDepth.toFixed(1)}m</div>
+                  {/* Mud Weight Caution Box */}
+                  <div className="bg-[#1b1b1d]/40 p-4 border border-[#46464c]/20 rounded-lg">
+                    <p className="font-mono text-[10px] text-[#ffb4ab] mb-1 font-bold uppercase tracking-wider">MUD WEIGHT CAUTION</p>
+                    <p className="text-xs text-[#c6c6cd] leading-normal font-sans font-medium">
+                      Slight pressure variance detected. Recommend monitoring pit volume for next 15 minutes.
+                    </p>
                   </div>
                 </div>
-                <div className="p-4 bg-[#201f21]/60 backdrop-blur-md">
-                  <p className="font-mono text-[11px] font-bold text-[#c0c6de] uppercase tracking-widest">CURRENT FORMATION: BASALT STRATA</p>
-                  <p className="text-[10px] text-[#c6c6cd] font-medium mt-0.5 leading-normal">Estimated thickness: 450m | Porosity: 12%</p>
+              </div>
+
+              {/* Geology Map Card */}
+              <div className="glass-panel overflow-hidden rounded-lg">
+                <img 
+                  className="w-full h-40 object-cover opacity-60 hover:opacity-90 transition-all duration-500" 
+                  alt="Scientific visualization of deep earth geological layers" 
+                  src="/images/geological_cross_section.png"
+                />
+                <div className="p-4 bg-[#201f21]/60 backdrop-blur-md border-t border-[#1a191d]">
+                  <p className="font-mono text-[11px] font-bold text-[#c0c6de] uppercase tracking-widest">CURRENT FORMATION: {geoInfo.name}</p>
+                  <p className="text-[10px] text-[#c6c6cd] font-medium mt-0.5 leading-normal">
+                    Thickness: {geoInfo.thickness} | Porosity: {geoInfo.porosity} | Borehole Pressure: {geoInfo.pressure}
+                  </p>
                 </div>
               </div>
 
@@ -823,21 +826,37 @@ export default function Dashboard() {
             <div className="col-span-12 xl:col-span-4 glass-panel p-6 rounded-lg flex flex-col justify-between">
               <div>
                 <h3 className="font-mono text-[11px] font-bold text-[#c0c6de] tracking-widest mb-4">RSS STEERING AGENT</h3>
-                <div className="p-4 bg-teal-950/10 border border-teal-500/20 rounded mb-6">
-                  <p className="font-mono text-[11px] text-teal-400 font-bold mb-1 uppercase">Target Status: On Path</p>
-                  <p className="text-xs text-slate-400 leading-normal">Continuous closed-loop guidance system active. Trajectory drift is strictly within the 2.5ft tolerance limit.</p>
-                </div>
+                {(() => {
+                  const isAnomaly = currentPt?.is_anomaly;
+                  const dynamicDrift = (0.2 + Math.abs(Math.sin(currentDepth / 100)) * 0.9).toFixed(2);
+                  return (
+                    <>
+                      <div className={`p-4 rounded mb-6 border ${
+                        isAnomaly 
+                          ? 'bg-amber-950/10 border-amber-500/20 text-amber-400' 
+                          : 'bg-teal-950/10 border-teal-500/20 text-teal-400'
+                      }`}>
+                        <p className="font-mono text-[11px] font-bold mb-1 uppercase">
+                          Target Status: {isAnomaly ? 'Drift Warning' : 'On Path'}
+                        </p>
+                        <p className="text-xs text-slate-400 leading-normal">
+                          Continuous closed-loop guidance system active. Lateral drift is strictly capped at {dynamicDrift} ft (nominal tolerance: 2.5 ft).
+                        </p>
+                      </div>
 
-                <div className="space-y-4 font-mono text-[10px] font-bold">
-                  <div className="border-l-2 border-[#c0c6de] pl-4">
-                    <p className="opacity-60 text-[9px] text-[#c6c6cd]">Azimuth Setpoint</p>
-                    <p className="text-[#c0c6de]">342° North</p>
-                  </div>
-                  <div className="border-l-2 border-[#e4bfaa] pl-4">
-                    <p className="opacity-60 text-[9px] text-[#c6c6cd]">Build Rate</p>
-                    <p className="text-[#e4bfaa]">2.4° / 100 ft</p>
-                  </div>
-                </div>
+                      <div className="space-y-4 font-mono text-[10px] font-bold">
+                        <div className="border-l-2 border-[#c0c6de] pl-4">
+                          <p className="opacity-60 text-[9px] text-[#c6c6cd]">Azimuth Setpoint</p>
+                          <p className="text-[#c0c6de]">{(currentPt?.toolface_deg || 342).toFixed(1)}° North</p>
+                        </div>
+                        <div className="border-l-2 border-[#e4bfaa] pl-4">
+                          <p className="opacity-60 text-[9px] text-[#c6c6cd]">Build Rate</p>
+                          <p className="text-[#e4bfaa]">{(2.4 + Math.sin(currentDepth / 30) * 0.25).toFixed(2)}° / 100 ft</p>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </div>
@@ -850,20 +869,27 @@ export default function Dashboard() {
           <div className="glass-panel p-8 rounded-lg flex flex-col gap-6 animate-fade-in font-mono text-xs font-bold text-[#c6c6cd] pb-8">
             <h3 className="text-sm font-bold text-[#c0c6de] uppercase tracking-widest mb-2">BHA Sub-System Diagnostic Deck</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-5 bg-[#0e0e0f] border border-[#46464c]/20 rounded-lg">
-                <p className="opacity-60 text-[10px] mb-2">PDC Bit Wear Indicator</p>
-                <p className="text-[#c0c6de] text-lg">94.2% Health</p>
-              </div>
-              <div className="p-5 bg-[#0e0e0f] border border-[#46464c]/20 rounded-lg">
-                <p className="opacity-60 text-[10px] mb-2">Downhole Mud Motor Stall Margin</p>
-                <p className="text-[#e4bfaa] text-lg">82% Clear</p>
-              </div>
-              <div className="p-5 bg-[#0e0e0f] border border-[#46464c]/20 rounded-lg">
-                <p className="opacity-60 text-[10px] mb-2">Wireless MWD Pressure Pulse Amplitude</p>
-                <p className="text-teal-400 text-lg">Normal (14.2 psi)</p>
-              </div>
-            </div>
+            {(() => {
+              const pdcBitWear = Math.max(12.4, 98.2 - (currentDepth / 15000) * 8.5).toFixed(1);
+              const stallMargin = Math.min(100, Math.max(5, Math.floor(82 + Math.sin(Date.now() / 4000) * 6 - (rpmVal / 200) * 12)));
+              const pulseAmplitude = (14.2 + Math.sin(Date.now() / 6000) * 0.35).toFixed(1);
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="p-5 bg-[#0e0e0f] border border-[#46464c]/20 rounded-lg">
+                    <p className="opacity-60 text-[10px] mb-2">PDC Bit Wear Indicator</p>
+                    <p className="text-[#c0c6de] text-lg">{pdcBitWear}% Health</p>
+                  </div>
+                  <div className="p-5 bg-[#0e0e0f] border border-[#46464c]/20 rounded-lg">
+                    <p className="opacity-60 text-[10px] mb-2">Downhole Mud Motor Stall Margin</p>
+                    <p className="text-[#e4bfaa] text-lg">{stallMargin}% Clear</p>
+                  </div>
+                  <div className="p-5 bg-[#0e0e0f] border border-[#46464c]/20 rounded-lg">
+                    <p className="opacity-60 text-[10px] mb-2">Wireless MWD Pressure Pulse Amplitude</p>
+                    <p className="text-teal-400 text-lg">Normal ({pulseAmplitude} psi)</p>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
