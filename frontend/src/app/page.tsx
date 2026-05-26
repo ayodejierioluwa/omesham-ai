@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import React, { useState, useEffect, useRef } from 'react';
 
 // =====================================================================
@@ -44,6 +46,40 @@ export default function Dashboard() {
   const [location, setLocation] = useState('utah_forge');
   const [handoverNotes, setHandoverNotes] = useState('');
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
+  const [unitSystem, setUnitSystem] = useState<'us' | 'metric'>('us');
+  const [showEmergencyConfirm, setShowEmergencyConfirm] = useState(false);
+  const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
+  const [showProfileCard, setShowProfileCard] = useState(false);
+  const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
+
+  const formatThickness = (thicknessStr: string) => {
+    if (!thicknessStr) return '';
+    if (thicknessStr === 'Deep Horizon') return thicknessStr;
+    const valM = parseFloat(thicknessStr.replace(/,/g, '').replace('m', ''));
+    if (isNaN(valM)) return thicknessStr;
+    if (unitSystem === 'us') {
+      const valFt = Math.round(valM * 3.28084);
+      return `${valFt.toLocaleString()} ft`;
+    }
+    return `${valM.toLocaleString()} m`;
+  };
+
+  const getBaseAzimuth = (loc: string) => {
+    switch (loc) {
+      case 'permian_basin': return 185.3;
+      case 'volve_field': return 45.8;
+      case 'gom_deepwater': return 272.1;
+      case 'arabian_basin': return 12.5;
+      default: return 342.0;
+    }
+  };
+
+  const getDynamicAzimuth = (depth: number, loc: string) => {
+    const base = getBaseAzimuth(loc);
+    const drift = Math.sin(depth / 35) * 0.8;
+    const jitter = (Math.sin(depth * 3) * 0.15) + (Math.cos(depth * 7) * 0.08);
+    return base + drift + jitter;
+  };
   
   const depthRef = useRef(12482.4);
 
@@ -75,8 +111,8 @@ export default function Dashboard() {
     console.log(`Omesham: Tuning stream receiver to ${dataSource} | ${location} | Chaos: ${chaosMode}`);
     
     const endpoint = dataSource === 'field'
-      ? `http://127.0.0.1:8006/api/field/drilling_stream?location=${location}${chaosMode ? "&chaos=true" : ""}`
-      : `http://127.0.0.1:8006/api/drilling/telemetry_stream?location=${location}${chaosMode ? "&chaos=true" : ""}`;
+      ? `/apps/omesham/api/field/drilling_stream?location=${location}${chaosMode ? "&chaos=true" : ""}`
+      : `/apps/omesham/api/drilling/telemetry_stream?location=${location}${chaosMode ? "&chaos=true" : ""}`;
 
     const eventSource = new EventSource(endpoint);
     
@@ -97,11 +133,11 @@ export default function Dashboard() {
           }
         }
         
-        // Rolling buffer (holds up to 12 points for the Torque chart bars)
+        // Rolling buffer (holds up to 24 points for the Torque chart bars)
         setTelemetry(prev => {
           const updated = [...prev, { ...pt, timestamp: formattedTimestamp }];
-          if (updated.length > 12) {
-            return updated.slice(updated.length - 12);
+          if (updated.length > 24) {
+            return updated.slice(updated.length - 24);
           }
           return updated;
         });
@@ -172,7 +208,7 @@ export default function Dashboard() {
     const currentPt = telemetry.length > 0 ? telemetry[telemetry.length - 1] : null;
     if (!currentPt) return;
     try {
-      const res = await fetch("http://127.0.0.1:8006/api/drilling/feedback", {
+      const res = await fetch("/apps/omesham/api/drilling/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -324,7 +360,38 @@ export default function Dashboard() {
               </div>
             </div>
 
+            {/* Unit Selector Toggle */}
+            <div 
+              onClick={() => {
+                setUnitSystem(prev => prev === 'us' ? 'metric' : 'us');
+                playRadarBeep(880, 0.08, "sine");
+              }}
+              className="flex items-center gap-1.5 text-[#c6c6cd] hover:text-[#c0c6de] transition-colors duration-150 font-mono text-[11px] font-bold py-1 bg-[#131315]/40 border border-[#46464c]/20 rounded-xl px-3 cursor-pointer select-none"
+            >
+              <span className="material-symbols-outlined text-[16px]">tune</span>
+              <span>UNITS: {unitSystem.toUpperCase()}</span>
+            </div>
+
           </nav>
+        </div>
+
+        {/* Dynamic Geological Formation HUD at the top */}
+        <div className="hidden lg:flex items-center gap-4 bg-[#201f21]/60 px-4 py-1.5 border border-[#46464c]/20 rounded-xl font-mono text-[10px]">
+          <span className="text-[#c0c6de] font-bold tracking-widest uppercase">
+            FORMATION: {geoInfo.name}
+          </span>
+          <span className="text-[#46464c]">|</span>
+          <span className="text-[#c6c6cd]">
+            Thickness: <span className="text-white font-medium">{formatThickness(geoInfo.thickness)}</span>
+          </span>
+          <span className="text-[#46464c]">|</span>
+          <span className="text-[#c6c6cd]">
+            Porosity: <span className="text-white font-medium">{geoInfo.porosity}</span>
+          </span>
+          <span className="text-[#46464c]">|</span>
+          <span className="text-[#c6c6cd]">
+            Pressure: <span className={`${geoInfo.pressure === 'Extreme' || geoInfo.pressure === 'High' ? 'text-[#ffb4ab]' : 'text-white'} font-medium`}>{geoInfo.pressure}</span>
+          </span>
         </div>
 
         {/* Top bar right buttons */}
@@ -339,10 +406,133 @@ export default function Dashboard() {
             STRESS MODE
           </button>
           
-          <div className="flex items-center gap-3 text-[#c6c6cd]">
-            <span className="material-symbols-outlined cursor-pointer hover:text-[#c0c6de] text-[20px]">settings</span>
-            <span className={`material-symbols-outlined cursor-pointer hover:text-[#c0c6de] text-[20px] ${alertLogs.length > 0 ? 'text-[#ffb4ab] animate-pulse' : ''}`}>notifications_active</span>
-            <span className="material-symbols-outlined cursor-pointer text-[#c0c6de] text-[20px]">account_circle</span>
+          <div className="flex items-center gap-3 text-[#c6c6cd] no-print-element">
+            {/* Settings Icon and Dropdown */}
+            <div className="relative">
+              <span 
+                onClick={() => {
+                  setShowSettingsDropdown(prev => !prev);
+                  setShowNotificationsDropdown(false);
+                  setShowProfileCard(false);
+                  playRadarBeep(980, 0.08, "sine");
+                }}
+                className="material-symbols-outlined cursor-pointer hover:text-[#c0c6de] text-[20px] select-none"
+              >
+                settings
+              </span>
+              {showSettingsDropdown && (
+                <div className="absolute right-0 top-full mt-2 w-56 glass-panel bg-[#201f21]/95 backdrop-blur-xl border border-[#46464c]/40 p-4 rounded-lg z-[100] text-xs font-mono">
+                  <h4 className="text-[10px] text-[#c0c6de] font-bold tracking-widest uppercase border-b border-[#46464c]/20 pb-2 mb-3">SYSTEM PREFERENCES</h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span>UNIT SYSTEM:</span>
+                      <button 
+                        onClick={() => { setUnitSystem(prev => prev === 'us' ? 'metric' : 'us'); playRadarBeep(880, 0.08, "sine"); }}
+                        className="bg-[#353436] border border-[#46464c]/40 px-2 py-1 rounded text-[#c0c6de] hover:border-slate-400 font-bold"
+                      >
+                        {unitSystem.toUpperCase()}
+                      </button>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>SOUND EFFECTS:</span>
+                      <button 
+                        onClick={() => playRadarBeep(1200, 0.15, "triangle")}
+                        className="bg-[#353436] border border-[#46464c]/40 px-2 py-1 rounded text-[#c0c6de] hover:border-slate-400 font-bold"
+                      >
+                        TEST AUDIO
+                      </button>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>CLEAR LOGS:</span>
+                      <button 
+                        onClick={() => { setAlertLogs([]); playRadarBeep(400, 0.2, "sawtooth"); }}
+                        className="bg-red-950/20 border border-red-500/30 px-2 py-1 rounded text-red-400 hover:border-red-500 font-bold"
+                      >
+                        RESET
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Notifications Icon and Dropdown */}
+            <div className="relative">
+              <span 
+                onClick={() => {
+                  setShowNotificationsDropdown(prev => !prev);
+                  setShowSettingsDropdown(false);
+                  setShowProfileCard(false);
+                  playRadarBeep(980, 0.08, "sine");
+                }}
+                className={`material-symbols-outlined cursor-pointer hover:text-[#c0c6de] text-[20px] select-none ${alertLogs.length > 0 ? 'text-[#ffb4ab] animate-pulse' : ''}`}
+              >
+                notifications_active
+              </span>
+              {showNotificationsDropdown && (
+                <div className="absolute right-0 top-full mt-2 w-72 glass-panel bg-[#201f21]/95 backdrop-blur-xl border border-[#46464c]/40 p-4 rounded-lg z-[100] text-xs font-mono">
+                  <h4 className="text-[10px] text-[#c0c6de] font-bold tracking-widest uppercase border-b border-[#46464c]/20 pb-2 mb-3 flex justify-between items-center">
+                    <span>NOC EVENT ALARMS</span>
+                    {alertLogs.length > 0 && <span className="bg-[#ffb4ab] text-[#690005] px-1.5 py-0.5 rounded text-[8px] font-extrabold">{alertLogs.length}</span>}
+                  </h4>
+                  <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+                    {alertLogs.length === 0 ? (
+                      <p className="text-[9px] text-[#c6c6cd] italic text-center py-4">No active alarms in buffer.</p>
+                    ) : (
+                      alertLogs.slice(-5).reverse().map((log, idx) => (
+                        <div key={idx} className="bg-[#131315] border border-[#46464c]/20 p-2 rounded text-[9px] leading-relaxed flex flex-col gap-0.5">
+                          <div className="flex justify-between items-center text-[8px] text-[#c6c6cd]/55 font-bold">
+                            <span>{log.timestamp}</span>
+                            <span className={log.type === "Predictive Alert" ? "text-[#e4bfaa]" : "text-[#ffb4ab]"}>{log.type}</span>
+                          </div>
+                          <p className="text-[#e5e2e3] font-medium">{log.message}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Profile Icon and Dropdown */}
+            <div className="relative">
+              <span 
+                onClick={() => {
+                  setShowProfileCard(prev => !prev);
+                  setShowSettingsDropdown(false);
+                  setShowNotificationsDropdown(false);
+                  playRadarBeep(980, 0.08, "sine");
+                }}
+                className="material-symbols-outlined cursor-pointer text-[#c0c6de] text-[20px] select-none"
+              >
+                account_circle
+              </span>
+              {showProfileCard && (
+                <div className="absolute right-0 top-full mt-2 w-64 glass-panel bg-[#201f21]/95 backdrop-blur-xl border border-[#46464c]/40 p-4 rounded-lg z-[100] text-xs font-mono">
+                  <div className="flex items-center gap-3 border-b border-[#46464c]/20 pb-3 mb-3">
+                    <span className="material-symbols-outlined text-[36px] text-[#c0c6de]">account_circle</span>
+                    <div>
+                      <h4 className="font-bold text-[#e5e2e3] text-xs">Ayodeji Erioluwa</h4>
+                      <p className="text-[9px] text-slate-500 font-bold">CO-FOUNDER & DEVELOPER</p>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5 text-[9px] text-[#c6c6cd] font-bold">
+                    <div className="flex justify-between">
+                      <span>CLEARANCE:</span>
+                      <span className="text-[#c0c6de]">LEVEL 4 (MASTER NOC)</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>CURRENT NODE:</span>
+                      <span className="text-white">NODE-07B (OMESHAM)</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>CREDENTIAL:</span>
+                      <span className="text-teal-400 font-semibold">SSO SYNCED</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -382,7 +572,10 @@ export default function Dashboard() {
         {/* Sidebar footer buttons */}
         <div className="p-6 mt-auto flex flex-col gap-4 border-t border-[#46464c]/20">
           <button 
-            onClick={() => { setChaosMode(false); playRadarBeep(440, 0.3, "sawtooth"); }}
+            onClick={() => {
+              setShowEmergencyConfirm(true);
+              playRadarBeep(500, 0.1, "triangle");
+            }}
             className="w-full bg-[#ffb4ab] text-[#690005] py-3 font-mono text-[10px] font-extrabold tracking-widest rounded-lg shadow-lg shadow-[#ffb4ab]/10 hover:scale-[0.98] transition-transform uppercase"
           >
             EMERGENCY STOP
@@ -487,9 +680,12 @@ export default function Dashboard() {
                   </div>
                   <p className="font-mono text-[10px] text-[#c6c6cd] mb-4 uppercase tracking-widest leading-normal">WELL DEPTH<br />(MD)</p>
                   <p className="text-xl lg:text-2xl font-mono text-[#c0c6de] font-bold leading-tight">
-                    {currentDepth.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                    {unitSystem === 'us' 
+                      ? currentDepth.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+                      : (currentDepth * 0.3048).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+                    }
                   </p>
-                  <p className="text-xs text-[#c6c6cd] font-mono mt-1">m</p>
+                  <p className="text-xs text-[#c6c6cd] font-mono mt-1">{unitSystem === 'us' ? 'ft' : 'm'}</p>
                   <div className="mt-4 h-1 w-full bg-[#353436] rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-[#c0c6de] shadow-[0_0_8px_rgba(192,198,222,0.8)]"
@@ -502,7 +698,7 @@ export default function Dashboard() {
                 <div className="glass-panel p-5 relative overflow-hidden group rounded-lg">
                   <p className="font-mono text-[10px] text-[#c6c6cd] mb-4 uppercase tracking-widest">WOB (LOAD)</p>
                   <p className="text-xl lg:text-2xl font-mono text-[#bec6e0] font-bold">
-                    {wobVal.toFixed(1)} <span className="text-xs text-[#c6c6cd]">klbs</span>
+                    {unitSystem === 'us' ? wobVal.toFixed(1) : (wobVal * 0.453592).toFixed(1)} <span className="text-xs text-[#c6c6cd]">{unitSystem === 'us' ? 'klbs' : 'tonnes'}</span>
                   </p>
                   <div className="mt-4 h-1 w-full bg-[#353436] rounded-full overflow-hidden">
                     <div 
@@ -530,7 +726,7 @@ export default function Dashboard() {
                 <div className="glass-panel p-5 relative overflow-hidden group rounded-lg">
                   <p className="font-mono text-[10px] text-[#c6c6cd] mb-4 uppercase tracking-widest">RATE OF PEN.</p>
                   <p className="text-xl lg:text-2xl font-mono text-[#c0c6de] font-bold">
-                    {ropVal.toFixed(1)} <span className="text-xs text-[#c6c6cd]">m/hr</span>
+                    {unitSystem === 'us' ? ropVal.toFixed(1) : (ropVal * 0.3048).toFixed(1)} <span className="text-xs text-[#c6c6cd]">{unitSystem === 'us' ? 'ft/hr' : 'm/hr'}</span>
                   </p>
                   <div className="mt-4 h-1 w-full bg-[#353436] rounded-full overflow-hidden">
                     <div 
@@ -550,7 +746,7 @@ export default function Dashboard() {
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="font-mono text-[11px] font-bold text-[#c0c6de] tracking-widest flex items-center gap-2">
                       <span className="material-symbols-outlined text-[16px]">monitoring</span> 
-                      REAL-TIME TORQUE DYNAMICS
+                      REAL-TIME TORQUE DYNAMICS ({unitSystem === 'us' ? 'FT-LBS' : 'KN-M'})
                     </h3>
                     <div className="flex gap-2">
                       <span className={`w-2 h-2 rounded-full bg-[#c0c6de] ${currentPt?.is_anomaly ? 'animate-ping' : ''}`}></span>
@@ -562,27 +758,44 @@ export default function Dashboard() {
                   <div className="flex-1 flex gap-4">
                     {/* Y Axis scale - Clean, low-contrast, precise */}
                     <div className="flex flex-col justify-between text-[8px] text-[#c6c6cd]/40 font-mono font-bold py-1 select-none h-[180px] text-right min-w-[50px]">
-                      <span>45,000</span>
-                      <span>30,000</span>
-                      <span>15,000</span>
+                      <span>{unitSystem === 'us' ? '45,000' : '61.0'}</span>
+                      <span>{unitSystem === 'us' ? '30,000' : '40.7'}</span>
+                      <span>{unitSystem === 'us' ? '15,000' : '20.3'}</span>
                       <span>0</span>
                     </div>
 
                     <div className="flex-1 flex flex-col justify-end">
                       {/* Bars container */}
-                      <div className="w-full flex items-end gap-3 h-[180px] border-b border-l border-[#1a191d] relative pt-4 pb-0.5 px-2">
-                        {/* 12 columns representing physical real-time telemetry elements */}
-                        {telemetry.slice(-12).map((pt, idx) => {
+                      <div className="w-full flex items-end gap-1.5 h-[180px] border-b border-l border-[#46464c]/40 relative pt-4 pb-0.5 px-2 bg-slate-950/20 rounded-md">
+                        {/* Horizontal Grid lines */}
+                        <div className="absolute inset-x-0 bottom-0 top-4 flex flex-col justify-between pointer-events-none pb-0.5">
+                          <div className="border-b border-dashed border-[#46464c]/15 w-full"></div>
+                          <div className="border-b border-dashed border-[#46464c]/15 w-full"></div>
+                          <div className="border-b border-dashed border-[#46464c]/15 w-full"></div>
+                          <div className="w-full"></div>
+                        </div>
+
+                        {/* 24 columns representing physical real-time telemetry elements */}
+                        {telemetry.slice(-24).map((pt, idx) => {
                           const heightPct = Math.min((pt.torque_ftlbs / 45000) * 100, 100);
                           const isAnomaly = pt.is_anomaly;
                           
                           return (
-                            <div key={idx} className="flex-1 flex flex-col justify-end h-full group relative">
+                            <div key={idx} className="flex-1 flex flex-col justify-end h-full group relative z-10">
+                              {/* Interactive Hover Tooltip */}
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#131315]/95 border border-[#46464c]/80 text-[#e5e2e3] font-mono text-[9px] px-2 py-1 rounded shadow-[0_4px_12px_rgba(0,0,0,0.5)] opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-30 whitespace-nowrap">
+                                <div className="font-bold text-center border-b border-[#46464c]/20 pb-0.5 mb-0.5">
+                                  {isAnomaly ? '🚨 ANOMALY' : '✓ NOMINAL'}
+                                </div>
+                                <div>Torque: <span className="text-[#c0c6de] font-bold">{unitSystem === 'us' ? `${pt.torque_ftlbs.toLocaleString()} ft-lbs` : `${(pt.torque_ftlbs * 1.35582 / 1000).toFixed(1)} kN-m`}</span></div>
+                                <div className="text-[8px] opacity-60">Time: {pt.timestamp}</div>
+                              </div>
+
                               <div 
-                                className={`w-full rounded-sm transition-all duration-300 ${
+                                className={`w-full rounded-sm transition-all duration-200 cursor-pointer ${
                                   isAnomaly 
-                                    ? 'bg-gradient-to-t from-[#93000a]/20 to-[#93000a]/80 border-t border-[#ffb4ab] shadow-[0_0_8px_#ffb4ab]' 
-                                    : 'bg-gradient-to-t from-[#201f21]/10 to-[#c0c6de]/30 border-t border-[#c0c6de]/20'
+                                    ? 'bg-gradient-to-t from-[#93000a]/30 to-[#93000a]/90 border-t border-[#ffb4ab] shadow-[0_0_8px_rgba(255,180,171,0.5)] hover:scale-y-105' 
+                                    : 'bg-gradient-to-t from-[#201f21]/20 to-[#c0c6de]/40 border-t border-[#c0c6de]/30 hover:to-[#c0c6de]/60 hover:scale-y-105'
                                 }`}
                                 style={{ height: `${heightPct}%` }}
                               ></div>
@@ -593,10 +806,10 @@ export default function Dashboard() {
 
                       {/* X Axis Time Labels */}
                       <div className="flex justify-between text-[8px] text-[#c6c6cd]/40 font-mono font-bold mt-1.5 px-2 select-none">
+                        <span>-240s</span>
+                        <span>-180s</span>
                         <span>-120s</span>
-                        <span>-90s</span>
                         <span>-60s</span>
-                        <span>-30s</span>
                         <span className="text-[#e4bfaa] animate-pulse">LIVE</span>
                       </div>
                     </div>
@@ -622,7 +835,7 @@ export default function Dashboard() {
                       </div>
                       <div className="border-l-2 border-slate-500 pl-4">
                         <p className="opacity-60 text-[9px] text-[#c6c6cd]">ORIENTATION</p>
-                        <p className="text-[#e5e2e3]">{(currentPt?.toolface_deg || 342).toFixed(0)}° AZIMUTH</p>
+                        <p className="text-[#e5e2e3]">{getDynamicAzimuth(currentDepth, location).toFixed(0)}° AZIMUTH</p>
                       </div>
                     </div>
                   </div>
@@ -766,7 +979,7 @@ export default function Dashboard() {
                 <div className="p-4 bg-[#201f21]/60 backdrop-blur-md border-t border-[#1a191d]">
                   <p className="font-mono text-[11px] font-bold text-[#c0c6de] uppercase tracking-widest">CURRENT FORMATION: {geoInfo.name}</p>
                   <p className="text-[10px] text-[#c6c6cd] font-medium mt-0.5 leading-normal">
-                    Thickness: {geoInfo.thickness} | Porosity: {geoInfo.porosity} | Borehole Pressure: {geoInfo.pressure}
+                    Thickness: {formatThickness(geoInfo.thickness)} | Porosity: {geoInfo.porosity} | Borehole Pressure: {geoInfo.pressure}
                   </p>
                 </div>
               </div>
@@ -840,18 +1053,18 @@ export default function Dashboard() {
                           Target Status: {isAnomaly ? 'Drift Warning' : 'On Path'}
                         </p>
                         <p className="text-xs text-slate-400 leading-normal">
-                          Continuous closed-loop guidance system active. Lateral drift is strictly capped at {dynamicDrift} ft (nominal tolerance: 2.5 ft).
+                          Continuous closed-loop guidance system active. Lateral drift is strictly capped at {unitSystem === 'us' ? `${dynamicDrift} ft` : `${(parseFloat(dynamicDrift) * 0.3048).toFixed(2)} m`} (nominal tolerance: {unitSystem === 'us' ? '2.5 ft' : '0.76 m'}).
                         </p>
                       </div>
 
                       <div className="space-y-4 font-mono text-[10px] font-bold">
                         <div className="border-l-2 border-[#c0c6de] pl-4">
                           <p className="opacity-60 text-[9px] text-[#c6c6cd]">Azimuth Setpoint</p>
-                          <p className="text-[#c0c6de]">{(currentPt?.toolface_deg || 342).toFixed(1)}° North</p>
+                          <p className="text-[#c0c6de]">{getBaseAzimuth(location).toFixed(1)}° North</p>
                         </div>
                         <div className="border-l-2 border-[#e4bfaa] pl-4">
                           <p className="opacity-60 text-[9px] text-[#c6c6cd]">Build Rate</p>
-                          <p className="text-[#e4bfaa]">{(2.4 + Math.sin(currentDepth / 30) * 0.25).toFixed(2)}° / 100 ft</p>
+                          <p className="text-[#e4bfaa]">{(2.4 + Math.sin(currentDepth / 30) * 0.25).toFixed(2)}° / {unitSystem === 'us' ? '100 ft' : '30 m'}</p>
                         </div>
                       </div>
                     </>
@@ -899,7 +1112,7 @@ export default function Dashboard() {
                              SHIFT REPORT MODAL
          ===================================================================== */}
       {showReportModal && (
-        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-6 no-print">
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-6 print-overlay-wrapper">
           <div className="glass-panel max-w-2xl w-full p-8 border border-primary/30 rounded-lg relative overflow-hidden shadow-2xl">
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl"></div>
             
@@ -920,12 +1133,20 @@ export default function Dashboard() {
                   <div className="space-y-2.5 text-sm">
                     <div className="flex justify-between border-b border-[#46464c]/10 pb-1">
                       <span className="text-[#c6c6cd] font-bold">Total Progress</span>
-                      <span className="text-slate-100 font-bold">{currentDepth.toFixed(1)} m</span>
+                      <span className="text-slate-100 font-bold">
+                        {unitSystem === 'us' 
+                          ? `${currentDepth.toFixed(1)} ft` 
+                          : `${(currentDepth * 0.3048).toFixed(1)} m`
+                        }
+                      </span>
                     </div>
                     <div className="flex justify-between border-b border-[#46464c]/10 pb-1">
                       <span className="text-[#c6c6cd] font-bold">Avg ROP</span>
                       <span className="text-slate-100 font-bold">
-                        {(telemetry.reduce((acc, val) => acc + val.rop_fph, 0) / Math.max(telemetry.length, 1)).toFixed(1)} m/hr
+                        {unitSystem === 'us'
+                          ? `${(telemetry.reduce((acc, val) => acc + val.rop_fph, 0) / Math.max(telemetry.length, 1)).toFixed(1)} ft/hr`
+                          : `${((telemetry.reduce((acc, val) => acc + val.rop_fph, 0) / Math.max(telemetry.length, 1)) * 0.3048).toFixed(1)} m/hr`
+                        }
                       </span>
                     </div>
                     <div className="flex justify-between border-b border-[#46464c]/10 pb-1">
@@ -960,9 +1181,12 @@ export default function Dashboard() {
                 <textarea 
                   value={handoverNotes}
                   onChange={(e) => setHandoverNotes(e.target.value)}
-                  className="w-full bg-transparent border-none focus:ring-0 text-xs h-24 p-0 placeholder-slate-600 text-[#e5e2e3]" 
+                  className="w-full bg-transparent border-none focus:ring-0 text-xs h-24 p-0 placeholder-slate-600 text-[#e5e2e3] print:hidden" 
                   placeholder="Enter secure well handover instructions, motor tool status, or formation anomalies here..."
                 ></textarea>
+                <p className="hidden print:block text-xs text-[#e5e2e3] whitespace-pre-wrap font-sans min-h-[50px] leading-relaxed">
+                  {handoverNotes || "No handover notes entered for this shift."}
+                </p>
               </div>
             </div>
 
@@ -972,18 +1196,73 @@ export default function Dashboard() {
                   setShowReportModal(false);
                   playRadarBeep(600, 0.1, "sine");
                 }}
-                className="px-6 py-2.5 hover:bg-[#353436]/20 rounded tracking-wider uppercase"
+                className="px-6 py-2.5 hover:bg-[#353436]/20 rounded tracking-wider uppercase no-print-element"
               >
                 CANCEL
+              </button>
+              <button 
+                onClick={() => {
+                  playRadarBeep(900, 0.1, "sine");
+                  window.print();
+                }}
+                className="px-6 py-2.5 border border-[#c0c6de]/30 hover:border-[#c0c6de]/70 text-[#c0c6de] rounded tracking-wider uppercase flex items-center gap-1.5 no-print-element"
+              >
+                <span className="material-symbols-outlined text-[14px]">picture_as_pdf</span>
+                <span>PRINT / PDF</span>
               </button>
               <button 
                 onClick={() => {
                   setShowReportModal(false);
                   playRadarBeep(1400, 0.2, "sine");
                 }}
-                className="px-8 py-2.5 bg-[#c0c6de] text-[#2a3043] font-black uppercase rounded shadow-lg shadow-[#c0c6de]/10 tracking-widest"
+                className="px-8 py-2.5 bg-[#c0c6de] text-[#2a3043] font-black uppercase rounded shadow-lg shadow-[#c0c6de]/10 tracking-widest no-print-element"
               >
                 AUTHORIZE & SUBMIT
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+                             EMERGENCY STOP CONFIRMATION MODAL
+         ===================================================================== */}
+      {showEmergencyConfirm && (
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-6 no-print">
+          <div className="glass-panel max-w-md w-full p-8 border border-red-500/30 rounded-lg relative overflow-hidden shadow-2xl">
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-red-500/10 rounded-full blur-3xl"></div>
+            
+            <div className="border-b border-[#ffb4ab]/20 pb-4 mb-6 font-mono text-center">
+              <span className="material-symbols-outlined text-[48px] text-[#ffb4ab] animate-pulse select-none">warning</span>
+              <p className="text-[#ffb4ab] tracking-[0.2em] mt-2 text-xs font-bold uppercase">CRITICAL SYSTEM OVERRIDE</p>
+              <h2 className="text-lg font-black text-[#e5e2e3] mt-2">ENFORCE EMERGENCY STOP?</h2>
+            </div>
+
+            <div className="font-mono text-xs text-[#c6c6cd] leading-relaxed mb-8 text-center">
+              This action will reset telemetry actuators, deactivate all test chaos signals on Node WH-9942-X, and restore a safe operating boundary.
+            </div>
+
+            <div className="flex justify-center gap-4 font-mono text-[10px] font-bold">
+              <button 
+                onClick={() => {
+                  setShowEmergencyConfirm(false);
+                  playRadarBeep(600, 0.1, "sine");
+                }}
+                className="px-6 py-2.5 hover:bg-[#353436]/20 border border-[#46464c]/40 rounded tracking-wider uppercase text-slate-300"
+              >
+                CANCEL
+              </button>
+              <button 
+                onClick={() => {
+                  setChaosMode(false);
+                  setShowEmergencyConfirm(false);
+                  playRadarBeep(440, 0.4, "sawtooth");
+                  setFeedbackToast("EMERGENCY STOP DIRECTIVE ENFORCED: ACTUATORS RESET TO SAFE OPERATING STATE");
+                  setTimeout(() => setFeedbackToast(null), 5000);
+                }}
+                className="px-8 py-2.5 bg-[#ffb4ab] text-[#690005] font-black uppercase rounded shadow-lg shadow-[#ffb4ab]/20 tracking-widest"
+              >
+                CONFIRM STOP
               </button>
             </div>
           </div>

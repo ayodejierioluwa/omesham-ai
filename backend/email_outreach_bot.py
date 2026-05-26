@@ -7,13 +7,30 @@ from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+# Load local .env if it exists
+def load_dotenv_custom(dotenv_path=".env"):
+    if os.path.exists(dotenv_path):
+        with open(dotenv_path) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, val = line.split('=', 1)
+                    os.environ[key.strip()] = val.strip().strip('"').strip("'")
+
+# Ensure .env is loaded from the directory of this script
+backend_dir = os.path.dirname(os.path.abspath(__file__))
+load_dotenv_custom(os.path.join(backend_dir, ".env"))
+
 # =====================================================================
 #                          CTO OUTREACH BOT CONFIG
 # =====================================================================
-DRY_RUN = True  # Set to False to actually send emails via SMTP on Monday morning!
+DRY_RUN = True  # Default to True. Pass --send CLI flag to set to False!
+if "--send" in sys.argv:
+    DRY_RUN = False
+
 SENDER_NAME = "Ayodeji Erioluwa"
 SENDER_EMAIL = "ayodejierioluwa@gmail.com"  # Your verified sender email
-SMTP_SERVER = "smtp.gmail.com"  # Replace with your SMTP server
+SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SMTP_USERNAME = os.environ.get("OMESHAM_SMTP_USER", "")
 SMTP_PASSWORD = os.environ.get("OMESHAM_SMTP_PASS", "")
@@ -25,16 +42,16 @@ TARGETS = [
         "recipient_name": "Roger Brown",
         "recipient_title": "Chief Executive Officer",
         "greeting": "Dear Mr. Brown,",
-        "email": "roger.brown@seplatenergy.com",
+        "emails": ["roger.brown@seplatenergy.com", "info@seplatenergy.com", "corporatecommunications@seplatenergy.com"],
         "is_operator": True,
         "custom_focus": "your gas and oil development campaigns across your Western Niger Delta assets, where maximizing Mechanical Specific Energy (MSE) and controlling hole integrity in interbedded sands are critical to lowering cost-per-foot."
     },
     {
         "company": "Heirs Energies Limited",
-        "recipient_name": "Osa Igbinoba",
-        "recipient_title": "Head of Drilling & Completions",
-        "greeting": "Dear Engr. Igbinoba,",
-        "email": "osa.igbinoba@heirsenergies.com",
+        "recipient_name": "Osa Igiehon",
+        "recipient_title": "Chief Executive Officer",
+        "greeting": "Dear Mr. Igiehon,",
+        "emails": ["osa.igiehon@heirsenergies.com", "info@heirsenergies.com"],
         "is_operator": True,
         "custom_focus": "your extensive drilling operations across the OML 17 asset, where sliding-mode steering, sand-shale boundary vibrational resonance, and mud motor efficiency are paramount to driving down rig Non-Productive Time (NPT)."
     },
@@ -43,7 +60,7 @@ TARGETS = [
         "recipient_name": "Gbite Falade",
         "recipient_title": "Managing Director & CEO",
         "greeting": "Dear Mr. Falade,",
-        "email": "gbite.falade@aradelholdings.com",
+        "emails": ["g.falade@aradel.com", "info@aradel.com", "corporatecommunications@aradel.com"],
         "is_operator": True,
         "custom_focus": "your pioneering marginal field developments at Ogbele and Omerelu, where deploying lightweight edge-computing diagnostics can proactively prevent pipe washouts, protect drill collars, and extend drillstring life."
     },
@@ -52,7 +69,7 @@ TARGETS = [
         "recipient_name": "Ademola Adeyemi-Bero",
         "recipient_title": "Managing Director",
         "greeting": "Dear Mr. Adeyemi-Bero,",
-        "email": "adeyemi-bero@first-ep.com",
+        "emails": ["demola.adeyemibero@first-epdc.com", "adeyemi-bero@first-epdc.com", "info@first-epdc.com"],
         "is_operator": True,
         "custom_focus": "your shallow-water drilling campaigns in the Anyala-Maduan fields, where maintaining rigorous trajectory controls and mitigating marine stick-slip are essential to keeping complex offshore wellbores on target."
     },
@@ -61,16 +78,61 @@ TARGETS = [
         "recipient_name": "Wale Tinubu",
         "recipient_title": "Group Chief Executive",
         "greeting": "Dear Mr. Tinubu,",
-        "email": "wtinubu@oandoplc.com",
+        "emails": ["wtinubu@oandoplc.com", "info@oandoplc.com"],
         "is_operator": True,
         "custom_focus": "Oando's proud commitment to local content and technical excellence, demonstrating how an indigenous digital co-drilling brain can reduce structural well-delivery costs across your JV acreage."
+    },
+    {
+        "company": "ND Western",
+        "recipient_name": "Eberechukwu Oji",
+        "recipient_title": "Chief Executive Officer",
+        "greeting": "Dear Mr. Oji,",
+        "emails": ["eberechukwu.oji@ndwestern.com", "info@ndwestern.com"],
+        "is_operator": True,
+        "custom_focus": "your oil and gas operations in OML 34, where controlling severe lateral vibrations in thick Cretaceous sands and preventing unexpected mud-motor stalls are paramount to keeping rig downtime at zero."
+    },
+    {
+        "company": "Lekoil Nigeria Limited",
+        "recipient_name": "Olalekan Adebayo",
+        "recipient_title": "Chief Executive Officer",
+        "greeting": "Dear Mr. Adebayo,",
+        "emails": ["lekan.adebayo@lekoil.com", "info@lekoil.com"],
+        "is_operator": True,
+        "custom_focus": "your offshore assets in OML 113 and the Otakikpo field, where high wave-induced stick-slip, lateral cutter wear, and standpipe pressure mud leaks can cause catastrophic bottom-hole assembly (BHA) washouts."
+    },
+    {
+        "company": "AMNI International Petroleum Development Company",
+        "recipient_name": "Chief Tunde Afolabi",
+        "recipient_title": "Chairman & CEO",
+        "greeting": "Dear Chief Afolabi,",
+        "emails": ["info@amni.com", "tafolabi@amni.com"],
+        "is_operator": True,
+        "custom_focus": "your offshore operations at the Ima and Okoro fields, where marine stick-slip and rapid formation compaction require real-time, closed-loop RPM and WOB micro-adjustments to protect expensive directional BHAs."
+    },
+    {
+        "company": "Waltersmith Petroman Oil Limited",
+        "recipient_name": "Chikezie Nwosu",
+        "recipient_title": "Chief Executive Officer",
+        "greeting": "Dear Mr. Nwosu,",
+        "emails": ["info@waltersmithng.com", "cnwosu@waltersmithng.com"],
+        "is_operator": True,
+        "custom_focus": "your Ibigwe field development campaigns, where deploying lightweight edge-computed Downhole Vibration Diagnostics (DVD) can prevent structural drillstring failures, maintain hole geometry, and protect bottom-hole assemblies."
+    },
+    {
+        "company": "Eroton Exploration & Production",
+        "recipient_name": "Dr. Emeka Onyeka",
+        "recipient_title": "Chief Executive Officer",
+        "greeting": "Dear Dr. Onyeka,",
+        "emails": ["info@eroton-ep.com", "eonyeka@eroton-ep.com"],
+        "is_operator": True,
+        "custom_focus": "your production and development campaigns in OML 18, where real-time standpipe pressure (SPP) anomaly tracking can predict mud-motor washouts and downhole stalls before they result in expensive rig NPT."
     },
     {
         "company": "NUPRC (Nigerian Upstream Petroleum Regulatory Commission)",
         "recipient_name": "Engr. Gbenga Komolafe",
         "recipient_title": "Commission Chief Executive",
         "greeting": "Dear Engr. Komolafe,",
-        "email": "gbenga.komolafe@nuprc.gov.ng",
+        "emails": ["nuprc@nuprc.gov.ng", "info@nuprc.gov.ng"],
         "is_operator": False,
         "custom_focus": "your visionary leadership in promoting local content, digital sovereign drilling standards, and regulatory safety oversight of downhole operations in Nigeria."
     }
@@ -89,7 +151,7 @@ As {company} continues to drive high-impact campaigns across {custom_focus}
 
 In the complex, interbedded geology of the Niger Delta, drilling hazards like lateral vibrations, torsional stick-slip, and sudden downhole motor stalling represent massive cost factors. When daily rig rates in land and swamp operations are factored in, unplanned Non-Productive Time (NPT) easily translates to losses of $80,000 to $150,000 per day.
 
-I am an indigenous petroleum software developer and engineering co-founder, and I have built Omesham AI—an advanced, physics-clamped downhole diagnostic and co-drilling advisor designed to act as an autopilot and safety co-pilot for active drilling assemblies.
+I am an indigenous petroleum software developer and engineering co-founder, and I have built Omesham AI—the flagship drilling safety and real-time co-piloting module of PetroOne, our unified exploration and operations intelligence suite designed specifically for modern energy operators.
 
 WHAT OMESHAM AI SOLVES:
 
@@ -116,7 +178,7 @@ Thank you for your time, leadership, and support of local content development.
 Warm regards,
 
 Ayodeji Erioluwa
-Founder & Lead Developer, Omesham AI
+Founder & Lead Developer, PetroOne (Omesham AI)
 Email: ayodejierioluwa@gmail.com | Lagos, Nigeria
 """
 
@@ -127,7 +189,7 @@ I hope this email finds you well. I am writing to you in your capacity as the Co
 
 We greatly admire {custom_focus} As Nigeria cements its position as Africa's premier oil producer, advancing technical oversight and indigenous digital capabilities is critical to ensuring drilling safety and cost-efficiency.
 
-I am an indigenous petroleum software developer and engineering co-founder, and I have built Omesham AI—an advanced, physics-clamped digital twin and drilling diagnostic engine. 
+I am an indigenous petroleum software developer and engineering co-founder, and I have built Omesham AI—the flagship drilling safety and real-time co-piloting module of PetroOne, our unified exploration and operations intelligence suite designed specifically for modern energy operators.
 
 Designed as a cloud-based web application, Omesham AI ingests real-time drilling streams to automatically diagnose downhole hazards (like severe stick-slip vibrations, pipe washouts, and mud-motor stalling) and monitors 3D wellbore trajectory steering. 
 
@@ -148,7 +210,7 @@ Thank you for your time, leadership, and dedicated service to the nation.
 Warm regards,
 
 Ayodeji Erioluwa
-Founder & Lead Developer, Omesham AI
+Founder & Lead Developer, PetroOne (Omesham AI)
 Email: ayodejierioluwa@gmail.com | Lagos, Nigeria
 """
 
@@ -179,11 +241,11 @@ def calculate_sleep_until_monday_8am():
     time_diff = next_monday_7am_utc - now
     return max(0, time_diff.total_seconds())
 
-def build_email(target):
-    """Personalizes and builds a MIME message."""
+def build_email(target, recipient_email):
+    """Personalizes and builds a MIME message for a specific email address."""
     msg = MIMEMultipart()
     msg['From'] = f"{SENDER_NAME} <{SENDER_EMAIL}>"
-    msg['To'] = f"{target['recipient_name']} <{target['email']}>"
+    msg['To'] = f"{target['recipient_name']} <{recipient_email}>"
     
     if target['is_operator']:
         msg['Subject'] = "Proposal: Reducing Niger Delta Drilling Cost-per-Foot via Closed-Loop AI Diagnostics"
@@ -220,9 +282,11 @@ def main():
             f.write("> These drafts are optimized for PLAIN-TEXT clean emailing. All Markdown formatting characters (hashtags, bold stars, bullet stars) have been removed from the templates to ensure beautiful, professional, and readable Gmail inbox rendering.\n\n")
             
             for target in TARGETS:
-                _, body = build_email(target)
+                # We use the primary email address for drafts display
+                primary_email = target['emails'][0]
+                _, body = build_email(target, primary_email)
                 f.write(f"## Target: {target['company']} ({target['recipient_name']})\n")
-                f.write(f"**Email Contact:** `{target['email']}`\n")
+                f.write(f"**Email Contacts:** `{', '.join(target['emails'])}`\n")
                 f.write(f"**Title:** {target['recipient_title']}\n\n")
                 f.write("```text\n")
                 f.write(body)
@@ -232,18 +296,28 @@ def main():
         print("Please view the file to inspect the personalized letters.")
         return
 
+    # Verify credentials before any waiting or sending
+    if not SMTP_USERNAME or not SMTP_PASSWORD:
+        print("\nERROR: SMTP credentials (OMESHAM_SMTP_USER / OMESHAM_SMTP_PASS) are missing!", file=sys.stderr)
+        print("Please ensure they are defined in your .env file in the backend directory.", file=sys.stderr)
+        sys.exit(1)
+
     # Real-world scheduled execution loop
-    sleep_seconds = calculate_sleep_until_monday_8am()
-    wake_up_time = datetime.utcnow() + timedelta(seconds=sleep_seconds)
-    print(f"\n[{datetime.now().isoformat()}] SMTP credentials loaded successfully.")
-    print(f"Scheduling outreach to fire exactly on Monday at 8:00 AM West Africa Time (7:00 AM UTC).")
-    print(f"Calculated wait: {sleep_seconds / 3600:.2f} hours (Waking up at UTC: {wake_up_time.isoformat()})")
-    
-    if sleep_seconds > 0:
-        print("Outreach thread going to standby mode... [Press CTRL+C to abort scheduling]")
-        time.sleep(sleep_seconds)
+    bypass_schedule = "--now" in sys.argv
+    if not bypass_schedule:
+        sleep_seconds = calculate_sleep_until_monday_8am()
+        wake_up_time = datetime.utcnow() + timedelta(seconds=sleep_seconds)
+        print(f"\n[{datetime.now().isoformat()}] SMTP credentials loaded successfully.")
+        print(f"Scheduling outreach to fire exactly on Monday at 8:00 AM West Africa Time (7:00 AM UTC).")
+        print(f"Calculated wait: {sleep_seconds / 3600:.2f} hours (Waking up at UTC: {wake_up_time.isoformat()})")
         
-    print(f"\n[{datetime.now().isoformat()}] Standby concluded. Deploying pitches...")
+        if sleep_seconds > 0:
+            print("Outreach thread going to standby mode... [Press CTRL+C to abort scheduling]")
+            time.sleep(sleep_seconds)
+    else:
+        print(f"\n[{datetime.now().isoformat()}] Bypassing scheduling. Initiating immediate email outreach...")
+        
+    print(f"\n[{datetime.now().isoformat()}] Deploying pitches...")
     
     # Establish connection
     try:
@@ -255,17 +329,20 @@ def main():
         return
 
     success_count = 0
+    total_emails = 0
     for target in TARGETS:
-        msg, _ = build_email(target)
-        try:
-            server.sendmail(SENDER_EMAIL, [target['email']], msg.as_string())
-            print(f"SUCCESS: Pitch sent to {target['recipient_name']} ({target['company']}) -> {target['email']}")
-            success_count += 1
-        except Exception as e:
-            print(f"FAILED: Could not send to {target['recipient_name']} at {target['company']}: {e}", file=sys.stderr)
+        for email in target['emails']:
+            total_emails += 1
+            msg, _ = build_email(target, email)
+            try:
+                server.sendmail(SENDER_EMAIL, [email], msg.as_string())
+                print(f"SUCCESS: Pitch sent to {target['recipient_name']} ({target['company']}) -> {email}")
+                success_count += 1
+            except Exception as e:
+                print(f"FAILED: Could not send to {target['recipient_name']} at {target['company']} to address {email}: {e}", file=sys.stderr)
             
     server.quit()
-    print(f"\n[{datetime.now().isoformat()}] Pitch deployment completed. {success_count}/{len(TARGETS)} successfully delivered.")
+    print(f"\n[{datetime.now().isoformat()}] Pitch deployment completed. {success_count}/{total_emails} successfully delivered.")
 
 if __name__ == "__main__":
     main()

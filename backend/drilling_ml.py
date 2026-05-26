@@ -7,7 +7,16 @@ import sqlite3
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Omesham-Drill-ML")
 
-DB_PATH = "/Users/macbook/.gemini/antigravity/scratch/well_analyses_v3.db"
+# Dynamic DB Path Resolution
+_search_dir = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(_search_dir, "well_analyses_v3.db")
+for _ in range(5):
+    _parent = os.path.dirname(_search_dir)
+    _check_path = os.path.join(_parent, "well_analyses_v3.db")
+    if os.path.exists(_check_path):
+        DB_PATH = _check_path
+        break
+    _search_dir = _parent
 
 _last_calibrated = {}
 _cache_needs_refresh = True

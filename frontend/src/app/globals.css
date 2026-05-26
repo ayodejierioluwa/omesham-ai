@@ -58,3 +58,34 @@ body {
   border-color: #313035 !important;
   box-shadow: 0 4px 24px rgba(192, 198, 222, 0.02);
 }
+
+/* Print Overrides for Generating Shift Reports as PDF */
+@media print {
+  header, aside, main, .no-print, .no-print-element {
+    display: none !important;
+  }
+  
+  body {
+    background-color: #020617 !important;
+    color: #e5e2e3 !important;
+    background-image: none !important;
+  }
+
+  .print-overlay-wrapper {
+    position: relative !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    display: block !important;
+    z-index: auto !important;
+    padding: 0 !important;
+  }
+
+  .print-overlay-wrapper > div {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}
