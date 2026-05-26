@@ -51,6 +51,7 @@ export default function Dashboard() {
   const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
   const [showProfileCard, setShowProfileCard] = useState(false);
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
+  const [optimizationApplied, setOptimizationApplied] = useState(false);
 
   const formatThickness = (thicknessStr: string) => {
     if (!thicknessStr) return '';
@@ -293,6 +294,11 @@ export default function Dashboard() {
   };
 
   const geoInfo = getGeologyInfo(currentDepth);
+
+  // Reset optimization state whenever the geological formation changes
+  useEffect(() => {
+    setOptimizationApplied(false);
+  }, [geoInfo.name]);
 
   // Real-time lateral vibration index G
   const calculateVibration = () => {
@@ -961,19 +967,32 @@ export default function Dashboard() {
                 <div className="space-y-4">
                   {/* Formation Transition Box */}
                   <div className="bg-[#1b1b1d]/40 p-4 border border-[#46464c]/20 rounded-lg">
-                    <p className="font-mono text-[10px] text-[#e5e2e3] mb-1 font-bold uppercase tracking-wider">FORMATION TRANSITION DETECTED</p>
+                    <p className={`font-mono text-[10px] mb-1 font-bold uppercase tracking-wider ${optimizationApplied ? 'text-teal-400' : 'text-[#e5e2e3]'}`}>
+                      {optimizationApplied ? "✓ OPTIMIZATION ACTIVE" : "FORMATION TRANSITION DETECTED"}
+                    </p>
                     <p className="text-xs text-[#c6c6cd] leading-normal font-sans font-medium">
-                      Increase WOB to 28 klbs and reduce RPM to 120 to optimize ROP in upcoming Shale layer.
+                      {optimizationApplied 
+                        ? `Operating envelope adjusted to WOB: 28 klbs | RPM: 120. ROP optimized for ${geoInfo.name}.`
+                        : `Increase WOB to 28 klbs and reduce RPM to 120 to optimize ROP in upcoming ${geoInfo.name}.`
+                      }
                     </p>
                     <button 
+                      disabled={optimizationApplied}
                       onClick={() => {
                         onFeedbackSubmit('correct');
+                        setOptimizationApplied(true);
                         playRadarBeep(1100, 0.1, "sine");
                       }}
-                      className="mt-3 text-[10px] text-[#c0c6de] hover:text-[#e5e2e3] font-mono font-bold tracking-wider flex items-center gap-1 uppercase transition-colors"
+                      className={`mt-3 text-[10px] font-mono font-bold tracking-wider flex items-center gap-1 uppercase transition-colors ${
+                        optimizationApplied 
+                          ? 'text-teal-400/80 cursor-not-allowed' 
+                          : 'text-[#c0c6de] hover:text-[#e5e2e3] cursor-pointer'
+                      }`}
                     >
-                      <span>Execute Optimization</span>
-                      <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                      <span>{optimizationApplied ? "Applied Successfully" : "Execute Optimization"}</span>
+                      <span className="material-symbols-outlined text-[14px]">
+                        {optimizationApplied ? "check_circle" : "arrow_forward"}
+                      </span>
                     </button>
                   </div>
 
