@@ -106,6 +106,24 @@ export default function Dashboard() {
     }
   }, []);
 
+  // Iframe printing workaround: check for print flag on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('print') === 'true') {
+        const notes = params.get('notes');
+        if (notes) {
+          setHandoverNotes(decodeURIComponent(notes));
+        }
+        setShowReportModal(true);
+        // Wait for rendering to complete before triggering print
+        setTimeout(() => {
+          window.print();
+        }, 1200);
+      }
+    }
+  }, []);
+
   // SSE Real-Time Stream Receiver
   useEffect(() => {
     console.log(`Omesham: Tuning stream receiver to ${dataSource} | ${location} | Chaos: ${chaosMode}`);
@@ -1203,7 +1221,13 @@ export default function Dashboard() {
               <button 
                 onClick={() => {
                   playRadarBeep(900, 0.1, "sine");
-                  window.print();
+                  const isIframe = typeof window !== 'undefined' && window.self !== window.top;
+                  if (isIframe) {
+                    const notesParam = handoverNotes ? `&notes=${encodeURIComponent(handoverNotes)}` : '';
+                    window.open(`${window.location.pathname}?print=true${notesParam}`, '_blank');
+                  } else {
+                    window.print();
+                  }
                 }}
                 className="px-6 py-2.5 border border-[#c0c6de]/30 hover:border-[#c0c6de]/70 text-[#c0c6de] rounded tracking-wider uppercase flex items-center gap-1.5 no-print-element"
               >
