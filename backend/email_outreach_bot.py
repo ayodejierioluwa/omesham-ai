@@ -41,176 +41,199 @@ TARGETS = [
         "company": "Seplat Energy Plc",
         "recipient_name": "Roger Brown",
         "recipient_title": "Chief Executive Officer",
-        "greeting": "Dear Mr. Brown,",
-        "emails": ["roger.brown@seplatenergy.com", "info@seplatenergy.com", "corporatecommunications@seplatenergy.com"],
+        "greeting": "Dear Sir/Ma,",
+        "emails": ["roger.brown@seplatenergy.com", "info@seplatenergy.com", "ir@seplatenergy.com"],
         "is_operator": True,
-        "custom_focus": "your gas and oil development campaigns across your Western Niger Delta assets, where maximizing Mechanical Specific Energy (MSE) and controlling hole integrity in interbedded sands are critical to lowering cost-per-foot."
+        "custom_focus": "your gas and oil development campaigns across your Western Niger Delta assets, where maximizing Mechanical Specific Energy (MSE) and controlling hole integrity in interbedded sands are critical to lowering cost-per-foot.",
+        "product_solutions": """1. Omesham AI — Torsional Stick-Slip Prevention: Instantly detects early-stage downhole harmonic resonance during your Western Niger Delta campaigns, recommending real-time RPM/WOB target adjustments to prevent costly drillstring twist-offs.
+2. PetroGenesis-3D — Subsurface Workstation: Models complex reservoir stratigraphy and faults in full 3D, using high-fidelity synthetic seismic trace generation to improve structural drilling targeting.
+3. Conversational Telemetry (NLPS) & Secure Execution (AG): Allows your drilling engineers to safely query rig databases in plain English (e.g., "Show all high-risk anomalies except Nominal") under the protection of the secure Antigravity execution shield."""
     },
     {
         "company": "Heirs Energies Limited",
         "recipient_name": "Osa Igiehon",
         "recipient_title": "Chief Executive Officer",
-        "greeting": "Dear Mr. Igiehon,",
-        "emails": ["osa.igiehon@heirsenergies.com", "info@heirsenergies.com"],
+        "greeting": "Dear Sir/Ma,",
+        "emails": ["Chidimma.Ugbojiaku@Heirsenergies.com", "info@heirsenergies.com"],
         "is_operator": True,
-        "custom_focus": "your extensive drilling operations across the OML 17 asset, where sliding-mode steering, sand-shale boundary vibrational resonance, and mud motor efficiency are paramount to driving down rig Non-Productive Time (NPT)."
+        "custom_focus": "your extensive drilling operations across the OML 17 asset, where sliding-mode steering, sand-shale boundary vibrational resonance, and mud motor efficiency are paramount to driving down rig Non-Productive Time (NPT).",
+        "product_solutions": """1. PetroSight AI — Predictive Operations: Processes pipeline telemetry to predict flow anomalies and pressure losses, safeguarding production transport across OML 17.
+2. Omesham AI — Mud Motor Efficiency & BHA Protection: Tracks standpipe pressure changes to warn of downhole stalls and washouts up to 30 minutes before they cause expensive Non-Productive Time (NPT).
+3. Conversational Telemetry (NLPS) & Secure Execution (AG): Enables natural-language database querying (NLPS) backed by the secure Antigravity (AG) sandbox to search operational histories securely."""
     },
     {
         "company": "Aradel Holdings Plc",
         "recipient_name": "Gbite Falade",
         "recipient_title": "Managing Director & CEO",
-        "greeting": "Dear Mr. Falade,",
-        "emails": ["g.falade@aradel.com", "info@aradel.com", "corporatecommunications@aradel.com"],
+        "greeting": "Dear Sir/Ma,",
+        "emails": ["adegbolaadesina@aradel.com", "IR@aradel.com", "info@aradel.com"],
         "is_operator": True,
-        "custom_focus": "your pioneering marginal field developments at Ogbele and Omerelu, where deploying lightweight edge-computing diagnostics can proactively prevent pipe washouts, protect drill collars, and extend drillstring life."
-    },
-    {
-        "company": "First E&P",
-        "recipient_name": "Ademola Adeyemi-Bero",
-        "recipient_title": "Managing Director",
-        "greeting": "Dear Mr. Adeyemi-Bero,",
-        "emails": ["demola.adeyemibero@first-epdc.com", "adeyemi-bero@first-epdc.com", "info@first-epdc.com"],
-        "is_operator": True,
-        "custom_focus": "your shallow-water drilling campaigns in the Anyala-Maduan fields, where maintaining rigorous trajectory controls and mitigating marine stick-slip are essential to keeping complex offshore wellbores on target."
+        "custom_focus": "your pioneering marginal field developments at Ogbele and Omerelu, where deploying lightweight edge-computing diagnostics can proactively prevent pipe washouts, protect drill collars, and extend drillstring life.",
+        "product_solutions": """1. PetroGenesis-3D — Reservoir Stratigraphy Modeling: Visualizes and interacts with 3D geological block models to pinpoint thin-bed sands and optimize marginal field exploration at Ogbele and Omerelu.
+2. Omesham AI — BHA Diagnostics: Integrates physics-compliant models with high-frequency telemetry to predict washouts and cutter wear, protecting drill collars and extending drillstring life.
+3. Conversational Telemetry (NLPS) & Secure Execution (AG): Engineers can query exploration and well archives in natural language, securely sandboxed from code-injection vulnerabilities."""
     },
     {
         "company": "Oando Energy Resources",
         "recipient_name": "Wale Tinubu",
         "recipient_title": "Group Chief Executive",
-        "greeting": "Dear Mr. Tinubu,",
-        "emails": ["wtinubu@oandoplc.com", "info@oandoplc.com"],
+        "greeting": "Dear Sir/Ma,",
+        "emails": ["albalogun@oandoplc.com", "info@oandoplc.com", "ir@oandoplc.com"],
         "is_operator": True,
-        "custom_focus": "Oando's proud commitment to local content and technical excellence, demonstrating how an indigenous digital co-drilling brain can reduce structural well-delivery costs across your JV acreage."
+        "custom_focus": "Oando's proud commitment to local content and technical excellence, demonstrating how an indigenous digital co-drilling brain can reduce structural well-delivery costs across your JV acreage.",
+        "product_solutions": """1. GAIA AI — Unified Asset Intelligence: Consolidates your exploration, drilling, and production streams into a single, SSO-secured operations shell to reduce overhead across your JV acreage.
+2. PetroSight AI — Predictive Pipeline Diagnostics: Monitors transport networks in real-time, predicting structural anomalies before they lead to flow interruptions.
+3. Conversational Telemetry (NLPS) & Secure Execution (AG): Provides a natural-language search bar for corporate telemetry, letting staff search database metrics securely without SQL knowledge."""
     },
     {
         "company": "ND Western",
-        "recipient_name": "Eberechukwu Oji",
+        "recipient_name": "Olanrewaju (Lanre) Kalejaiye",
         "recipient_title": "Chief Executive Officer",
-        "greeting": "Dear Mr. Oji,",
-        "emails": ["eberechukwu.oji@ndwestern.com", "info@ndwestern.com"],
+        "greeting": "Dear Sir/Ma,",
+        "emails": ["info@ndwestern.com"],
         "is_operator": True,
-        "custom_focus": "your oil and gas operations in OML 34, where controlling severe lateral vibrations in thick Cretaceous sands and preventing unexpected mud-motor stalls are paramount to keeping rig downtime at zero."
+        "custom_focus": "your oil and gas operations in OML 34, where controlling severe lateral vibrations in thick Cretaceous sands and preventing unexpected mud-motor stalls are paramount to keeping rig downtime at zero.",
+        "product_solutions": """1. Omesham AI — Vibrational Mitigation: Analyzes downhole dynamics to identify lateral shock waves in thick Cretaceous formations, providing real-time RPM/WOB targets to damp rock resonance.
+2. Omesham AI — Autonomous State Monitoring: Distinguishes rotating vs. sliding modes, tracking toolface steering to keep OML 34 wellbores aligned with planned 3D trajectories.
+3. Conversational Telemetry (NLPS) & Secure Execution (AG): Rig supervisors can run natural language well logs queries, shielded from backend database corruption using the Antigravity sandbox."""
     },
     {
         "company": "Lekoil Nigeria Limited",
-        "recipient_name": "Olalekan Adebayo",
+        "recipient_name": "Olalekan (\"Lekan\") Akinyanmi",
         "recipient_title": "Chief Executive Officer",
-        "greeting": "Dear Mr. Adebayo,",
-        "emails": ["lekan.adebayo@lekoil.com", "info@lekoil.com"],
+        "greeting": "Dear Sir/Ma,",
+        "emails": ["investorrelations@lekoil.com", "info@lekoil.com"],
         "is_operator": True,
-        "custom_focus": "your offshore assets in OML 113 and the Otakikpo field, where high wave-induced stick-slip, lateral cutter wear, and standpipe pressure mud leaks can cause catastrophic bottom-hole assembly (BHA) washouts."
+        "custom_focus": "your offshore assets in OML 113 and the Otakikpo field, where high wave-induced stick-slip, lateral cutter wear, and standpipe pressure mud leaks can cause catastrophic bottom-hole assembly (BHA) washouts.",
+        "product_solutions": """1. Omesham AI — Wave Heave Compensation: Detects stick-slip and torque oscillations induced by offshore wave heave, recommending immediate RPM modifications to protect the bottom-hole assembly.
+2. PetroGenesis-3D — 3D Stratigraphy: Models reservoir faults and thin sands in 3D, convolving formation data with Ricker wavelets to generate real-time synthetic acoustic seismic profiles.
+3. Conversational Telemetry (NLPS) & Secure Execution (AG): Natural language querying of offshore telemetry with absolute backend security via the Antigravity Translation Shield."""
     },
     {
         "company": "AMNI International Petroleum Development Company",
         "recipient_name": "Chief Tunde Afolabi",
         "recipient_title": "Chairman & CEO",
-        "greeting": "Dear Chief Afolabi,",
-        "emails": ["info@amni.com", "tafolabi@amni.com"],
+        "greeting": "Dear Sir/Ma,",
+        "emails": ["info@amni.com"],
         "is_operator": True,
-        "custom_focus": "your offshore operations at the Ima and Okoro fields, where marine stick-slip and rapid formation compaction require real-time, closed-loop RPM and WOB micro-adjustments to protect expensive directional BHAs."
+        "custom_focus": "your offshore operations at the Ima and Okoro fields, where marine stick-slip and rapid formation compaction require real-time, closed-loop RPM and WOB micro-adjustments to protect expensive directional BHAs.",
+        "product_solutions": """1. Omesham AI — Closed-loop RPM/WOB Optimization: Recommends real-time adjustments to RPM and Weight-on-Bit to bypass rock compaction resonance at Ima and Okoro fields.
+2. Omesham AI — Predictive Fluid Dynamics: Tracks standpipe pressure anomalies to predict mud-motor washouts and downhole stalls before they result in expensive rig NPT.
+3. Conversational Telemetry (NLPS) & Secure Execution (AG): Safe natural-language interrogation of BHA telemetry, protected by the Antigravity secure execution sandbox."""
     },
     {
         "company": "Waltersmith Petroman Oil Limited",
-        "recipient_name": "Chikezie Nwosu",
-        "recipient_title": "Chief Executive Officer",
-        "greeting": "Dear Mr. Nwosu,",
-        "emails": ["info@waltersmithng.com", "cnwosu@waltersmithng.com"],
+        "recipient_name": "Oladapo Filani",
+        "recipient_title": "Managing Director & CEO",
+        "greeting": "Dear Sir/Ma,",
+        "emails": ["info@waltersmithng.com"],
         "is_operator": True,
-        "custom_focus": "your Ibigwe field development campaigns, where deploying lightweight edge-computed Downhole Vibration Diagnostics (DVD) can prevent structural drillstring failures, maintain hole geometry, and protect bottom-hole assemblies."
+        "custom_focus": "your Ibigwe field development campaigns, where deploying lightweight edge-computed Downhole Vibration Diagnostics (DVD) can prevent structural drillstring failures, maintain hole geometry, and protect bottom-hole assemblies.",
+        "product_solutions": """1. Omesham AI — Downhole Vibration Diagnostics: Evaluates torsional wave propagation to prevent drillstring failures, maintain borehole geometry, and protect bottom-hole assemblies at Ibigwe.
+2. PetroGenesis-3D — Subsurface Workstation: Interactively rotates and visualizes reservoir layers in full 3D to guide complex geological targeting.
+3. Conversational Telemetry (NLPS) & Secure Execution (AG): Allows engineers to query live rig databases in plain English under the secure Antigravity execution shield."""
     },
     {
         "company": "Eroton Exploration & Production",
         "recipient_name": "Dr. Emeka Onyeka",
         "recipient_title": "Chief Executive Officer",
-        "greeting": "Dear Dr. Onyeka,",
-        "emails": ["info@eroton-ep.com", "eonyeka@eroton-ep.com"],
+        "greeting": "Dear Sir/Ma,",
+        "emails": ["info@erotonep.com"],
         "is_operator": True,
-        "custom_focus": "your production and development campaigns in OML 18, where real-time standpipe pressure (SPP) anomaly tracking can predict mud-motor washouts and downhole stalls before they result in expensive rig NPT."
+        "custom_focus": "your production and development campaigns in OML 18, where real-time standpipe pressure (SPP) anomaly tracking can predict mud-motor washouts and downhole stalls before they result in expensive rig NPT.",
+        "product_solutions": """1. Omesham AI — Fluid Dynamics & SPP Tracking: Monitors standpipe pressure anomalies to warn of mud-motor washouts and downhole stalls up to 30 minutes before they occur.
+2. PetroSight AI — Flow Intelligence: Evaluates production and transport telemetry to identify flow anomalies and optimize transport security.
+3. Conversational Telemetry (NLPS) & Secure Execution (AG): Operates a natural-language query interface for well logs and transport logs, sandboxed safely by the Antigravity shell."""
     },
     {
         "company": "NUPRC (Nigerian Upstream Petroleum Regulatory Commission)",
         "recipient_name": "Engr. Gbenga Komolafe",
         "recipient_title": "Commission Chief Executive",
-        "greeting": "Dear Engr. Komolafe,",
+        "greeting": "Dear Sir/Ma,",
         "emails": ["nuprc@nuprc.gov.ng", "info@nuprc.gov.ng"],
         "is_operator": False,
-        "custom_focus": "your visionary leadership in promoting local content, digital sovereign drilling standards, and regulatory safety oversight of downhole operations in Nigeria."
+        "custom_focus": "your visionary leadership in promoting local content, digital sovereign drilling standards, and regulatory safety oversight of downhole operations in Nigeria.",
+        "product_solutions": """1. GAIA AI — Regulatory Dashboard: Aggregates operator data feeds into a unified dashboard, establishing digital compliance records and tracking national production metrics.
+2. NDR Conversational Search (NLPS): Empowers regulatory staff to query complex National Data Repository archives using natural English (e.g., "Find all wells with high risk in Cretaceous zones").
+3. Antigravity (AG) Translation Shield: Runs all natural language queries in a secure, sandboxed environment, preventing command injection or data tampering."""
+    },
+    {
+        "company": "Neconde Energy Limited",
+        "recipient_name": "Engr. Chichi Emenike",
+        "recipient_title": "Acting Managing Director",
+        "greeting": "Dear Sir/Ma,",
+        "emails": ["info@neconde.com.ng"],
+        "is_operator": True,
+        "custom_focus": "your operations and gas development campaigns across the OML 42 asset, where optimizing Mechanical Specific Energy (MSE) and controlling hole integrity in interbedded sands are critical to lowering cost-per-foot.",
+        "product_solutions": """1. Omesham AI — MSE Optimization: Integrates real-time ROP, RPM, and Hookload to optimize Mechanical Specific Energy and lower cost-per-foot across OML 42.
+2. PetroGenesis-3D — Seismic Explorer: Interactively visualizes subsurface strata and shears faults in real-time, matching structural traps perfectly.
+3. Conversational Telemetry (NLPS) & Secure Execution (AG): Rig supervisors query live well parameters in natural language, shielded by the Antigravity sandbox interpreter."""
     }
 ]
 
-# =====================================================================
-#             TAILORED PITCH TEMPLATES (CLEAN PLAIN-TEXT GMAIL FORMAT)
-# =====================================================================
-
 # TEMPLATE A: FOR UPSTREAM OIL & GAS OPERATORS
-OPERATOR_EMAIL_TEMPLATE = """{greeting}
+OPERATOR_EMAIL_TEMPLATE = """Dear {recipient_name},
 
 I hope this email finds you well. I am writing to you in your capacity as {recipient_title} of {company}.
 
-As {company} continues to drive high-impact campaigns across {custom_focus}
+I am closely following {company}'s high-impact operations across {custom_focus}
 
 In the complex, interbedded geology of the Niger Delta, drilling hazards like lateral vibrations, torsional stick-slip, and sudden downhole motor stalling represent massive cost factors. When daily rig rates in land and swamp operations are factored in, unplanned Non-Productive Time (NPT) easily translates to losses of $80,000 to $150,000 per day.
 
-I am an indigenous petroleum software developer and engineering co-founder, and I have built Omesham AI—the flagship drilling safety and real-time co-piloting module of PetroOne, our unified exploration and operations intelligence suite designed specifically for modern energy operators.
+I am an indigenous petroleum software developer and engineering co-founder, and I have built PetroOne, a unified exploration and operations intelligence suite designed specifically for modern energy operators.
 
-WHAT OMESHAM AI SOLVES:
+WHAT WE TARGET AND OFFER FOR {company}:
 
-1. Stick-Slip Prevention & Vibrational Mitigation: Detects early-stage downhole torsional resonance and recommends real-time, micro-adjusted RPM/WOB targets to bypass rock resonance before cutter wear or drillpipe twist-offs occur.
+{product_solutions}
 
-2. Autonomous State Monitoring: Automatically identifies directional sliding versus rotating modes in real time, tracking toolface steering orientations to keep the wellbore perfectly aligned with your 3D path.
-
-3. Predictive Fluid Dynamics: Monitors standpipe pressure anomalies to warn of mud-motor stalls and washouts up to 30 minutes before they physically manifest, protecting your Bottom Hole Assemblies (BHA).
-
-I have validated Omesham's physical models against complex geothermal and oilfield datasets, and I am passionate about proving this technology directly on Nigerian wells.
+I have validated our physical models and 3D subsurface engines against complex geothermal and oilfield datasets, and I am passionate about proving this technology directly on Nigerian fields.
 
 MY ASK — THE ZERO-RISK "HISTORICAL SHADOW TRIAL":
 
-Rather than asking to deploy live on your active rigs today, I propose a completely risk-free historical data playback:
+Rather than asking to deploy live on your active assets today, I propose a completely risk-free historical data playback:
 
-- Provide me with the raw WITSML/LAS log files of a previously drilled well that suffered from downhole dysfunction, high NPT, or drillstring failure.
-- I will run this data through Omesham's simulator in playback mode.
-- I will deliver a comprehensive, data-backed Drilling Efficiency Report proving exactly when and where Omesham would have predicted and mitigated the failure.
+- Provide me with the raw WITSML/LAS log files of a previously drilled well or historical operational logs that suffered from dysfunction, high NPT, or failure.
+- I will run this data through our simulator workstation in playback mode.
+- I will deliver a comprehensive, data-backed Drilling/Operations Efficiency Report proving exactly when and where PetroOne would have predicted and mitigated the failure.
 
-If you are looking to optimize drilling Mechanical Specific Energy (MSE) and spearhead indigenous digital innovation on your active campaigns, I would love to schedule a brief 10-minute technical web-demo with your drilling team this week to show Omesham running in real time.
-
-Thank you for your time, leadership, and support of local content development.
+If you are looking to optimize your campaigns and spearhead indigenous digital innovation, I would love to schedule a brief 10-minute technical web-demo with your engineering team this week to show our systems running in real time.
 
 Warm regards,
 
 Ayodeji Erioluwa
-Founder & Lead Developer, PetroOne (Omesham AI)
+Founder & Lead Developer, PetroOne
 Email: ayodejierioluwa@gmail.com | Lagos, Nigeria
 """
 
 # TEMPLATE B: FOR THE NUPRC REGULATORY COMMISSION
-REGULATOR_EMAIL_TEMPLATE = """{greeting}
+REGULATOR_EMAIL_TEMPLATE = """Dear {recipient_name},
 
 I hope this email finds you well. I am writing to you in your capacity as the Commission Chief Executive of the NUPRC.
 
 We greatly admire {custom_focus} As Nigeria cements its position as Africa's premier oil producer, advancing technical oversight and indigenous digital capabilities is critical to ensuring drilling safety and cost-efficiency.
 
-I am an indigenous petroleum software developer and engineering co-founder, and I have built Omesham AI—the flagship drilling safety and real-time co-piloting module of PetroOne, our unified exploration and operations intelligence suite designed specifically for modern energy operators.
+I am an indigenous petroleum software developer and engineering co-founder, and I have built PetroOne, our unified exploration and operations intelligence suite designed specifically for modern energy operators and regulatory oversight.
 
-Designed as a cloud-based web application, Omesham AI ingests real-time drilling streams to automatically diagnose downhole hazards (like severe stick-slip vibrations, pipe washouts, and mud-motor stalling) and monitors 3D wellbore trajectory steering. 
+WHAT WE OFFER FOR UPSTREAM OVERSIGHT:
+
+{product_solutions}
 
 WHY THIS IS CRITICAL FOR UPSTREAM OVERSIGHT:
 
-1. Digital Drilling Standards: Omesham provides an independent, physics-compliant audit log of drillstring mechanical integrity and safe operational envelopes.
+1. Digital Drilling Standards: PetroOne provides an independent, physics-compliant audit log of drillstring mechanical integrity and safe operational envelopes.
 
-2. Local Content Empowerment: This platform represents a major breakthrough in local software content, proving that elite drilling-mechanics software can be designed and deployed directly by Nigerian engineers.
+2. Local Content Empowerment: This platform represents a major breakthrough in local software content, proving that elite diagnostics and 3D visualization software can be designed and deployed directly by Nigerian engineers.
 
-3. National Data Repository (NDR) Integration: I am looking to collaborate with the NUPRC to test and validate Omesham's diagnostic capabilities over sanitized historical well logs stored in the NDR. 
+3. National Data Repository (NDR) Integration: I am looking to collaborate with the NUPRC to test and validate our diagnostic capabilities over sanitized historical well logs stored in the NDR. 
 
 MY REQUEST:
 
-I would be highly honored to schedule a brief, 10-minute technical web-demo with your digital transformation and engineering teams at the Commission to present Omesham's capabilities, and discuss a collaborative pilot to validate our diagnostics using historical National Data Repository files.
-
-Thank you for your time, leadership, and dedicated service to the nation.
+I would be highly honored to schedule a brief, 10-minute technical web-demo with your digital transformation and engineering teams at the Commission to present PetroOne's capabilities, and discuss a collaborative pilot to validate our diagnostics using historical National Data Repository files.
 
 Warm regards,
 
 Ayodeji Erioluwa
-Founder & Lead Developer, PetroOne (Omesham AI)
+Founder & Lead Developer, PetroOne
 Email: ayodejierioluwa@gmail.com | Lagos, Nigeria
 """
 
@@ -248,19 +271,24 @@ def build_email(target, recipient_email):
     msg['To'] = f"{target['recipient_name']} <{recipient_email}>"
     
     if target['is_operator']:
-        msg['Subject'] = "Proposal: Reducing Niger Delta Drilling Cost-per-Foot via Closed-Loop AI Diagnostics"
+        msg['Subject'] = "Proposal: Reducing Niger Delta Operations Overhead via Closed-Loop AI Diagnostics"
         body = OPERATOR_EMAIL_TEMPLATE.format(
             greeting=target['greeting'],
             recipient_name=target['recipient_name'],
             recipient_title=target['recipient_title'],
             company=target['company'],
-            custom_focus=target['custom_focus']
+            custom_focus=target['custom_focus'],
+            product_solutions=target['product_solutions']
         )
     else:
         msg['Subject'] = "Collaboration Proposal: Advancing Upstream Regulatory Safety via Indigenous Digital Twin Tech"
         body = REGULATOR_EMAIL_TEMPLATE.format(
             greeting=target['greeting'],
-            custom_focus=target['custom_focus']
+            recipient_name=target['recipient_name'],
+            recipient_title=target['recipient_title'],
+            company=target['company'],
+            custom_focus=target['custom_focus'],
+            product_solutions=target['product_solutions']
         )
         
     msg.attach(MIMEText(body, 'plain'))
@@ -272,7 +300,7 @@ def main():
     
     if DRY_RUN:
         print("\n=== DRY RUN ACTIVE: WRITING OUTREACH DRAFTS TO LOCAL MARKDOWN ===")
-        drafts_file = "/Users/macbook/.gemini/antigravity/scratch/omesham_ai/backend/outreach_drafts.md"
+        drafts_file = "/Users/macbook/.gemini/antigravity-ide/scratch/omesham_ai/backend/outreach_drafts.md"
         
         with open(drafts_file, "w") as f:
             f.write("# Omesham AI Optimized B2B Outreach Pitch Drafts\n")
