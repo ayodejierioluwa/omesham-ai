@@ -1,0 +1,39 @@
+xml_content = """<?xml version="1.0" encoding="UTF-8"?>
+<witsml:trajectorys xmlns:witsml="http://www.witsml.org/schemas/1series" version="1.4.1.1">
+  <witsml:trajectory uidWell="Omesham-Sample-Well" uid="Wellbore-Sample">
+    <witsml:nameWell>Sample Asset-01</witsml:nameWell>
+    <witsml:nameWellbore>Active Section</witsml:nameWellbore>
+    <witsml:dtimCreation>2026-06-17T12:00:00Z</witsml:dtimCreation>
+    
+    <!-- Station 1: Nominal Rotary Drilling -->
+    <witsml:trajectoryStation uid="Station-01">
+      <witsml:md uom="ft">8500.0</witsml:md>
+      <witsml:tvd uom="ft">8500.0</witsml:tvd>
+      <witsml:wob uom="klbs">22.5</witsml:wob>
+      <witsml:rpm uom="rpm">110.0</witsml:rpm>
+      <witsml:rop uom="ft/h">75.0</witsml:rop>
+      <witsml:spp uom="psi">2450.0</witsml:spp>
+      <witsml:torque uom="ft-lb">12500.0</witsml:torque>
+      <witsml:bhaState>Rotating (Rotary)</witsml:bhaState>
+      <witsml:formation>Sandstone Bed</witsml:formation>
+    </witsml:trajectoryStation>
+    
+    <!-- Station 2: Severe Stick-Slip Anomaly -->
+    <witsml:trajectoryStation uid="Station-02">
+      <witsml:md uom="ft">8510.0</witsml:md>
+      <witsml:tvd uom="ft">8510.0</witsml:tvd>
+      <witsml:wob uom="klbs">38.0</witsml:wob>
+      <witsml:rpm uom="rpm">25.0</witsml:rpm>
+      <witsml:rop uom="ft/h">15.0</witsml:rop>
+      <witsml:spp uom="psi">2500.0</witsml:spp>
+      <witsml:torque uom="ft-lb">32500.0</witsml:torque>
+      <witsml:bhaState>Rotating (Rotary)</witsml:bhaState>
+      <witsml:formation>Granite Basement</witsml:formation>
+    </witsml:trajectoryStation>
+  </witsml:trajectory>
+</witsml:trajectorys>
+"""
+
+with open("sample_station.xml", "w", encoding="utf-8") as f:
+    f.write(xml_content)
+print("Created sample_station.xml successfully!")

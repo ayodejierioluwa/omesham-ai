@@ -22,3 +22,7 @@ pip-log.txt
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Logs and scratch
+*.log
+backend/buggy_test.py
